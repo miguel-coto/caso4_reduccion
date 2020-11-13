@@ -1,0 +1,139 @@
+---
+title: "01 - Preparacion de datos"
+output: html_notebook
+---
+
+```{r}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(tidyverse)
+```
+
+Rutas
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+
+Cargando rutas
+```{r}
+
+ruta_curvas_2016 <- paste0(raw_data, "/Curvas Semanales (Histórico 2016).xlsx")
+ruta_curvas_2017 <- paste0(raw_data, "/Curvas Semanales (Histórico 2017).xlsx")
+ruta_curvas_2018 <- paste0(raw_data, "/Curvas Semanales (Histórico 2018).xlsx")
+ruta_curvas_2019 <- paste0(raw_data, "/Curvas Semanales (Histórico 2019).xlsx")
+ruta_curvas_2020 <- paste0(raw_data, "/Curvas Semanales.xlsx")
+
+```
+
+Funcion para buscar la tabla en excel
+```{r}
+leer_excel <- function(ruta, hoja) {
+  desired_sheet <- hoja
+  f_path = ruta
+  temp_read <- read_excel(f_path, sheet = desired_sheet)
+  
+  skip_rows <- NULL
+  col_skip <- 0
+  search_string <- "Plazo en días"
+  max_cols_to_search <- 10
+  max_rows_to_search <- 10
+  
+  while (length(skip_rows) == 0) {
+    col_skip <- col_skip + 1
+    if (col_skip == max_cols_to_search)
+      break
+    skip_rows <-
+      which(str_detect(temp_read[1:max_rows_to_search, col_skip][[1]], search_string)) - 0
+    
+  }
+  
+  real_data <- read_excel(f_path,
+                          sheet = desired_sheet,
+                          range = cell_limits(c(skip_rows + 1, 2), 
+                                              c(skip_rows + 3601, 4)))
+                                  
+  return(real_data)
+}
+```
+
+Funcion para preparar datos
+```{r}
+
+prep_datos <- function(ruta) {
+  tab_names <- excel_sheets(path = ruta)
+  
+  #tab_names <- tab_names[!grepl("Curva", tab_names, fixed = TRUE)]
+
+  list_curvas <-
+    lapply(tab_names, function(x)
+      leer_excel(ruta = ruta, hoja = x))
+  
+  list_curvas <- lapply(list_curvas, clean_names)
+  
+  df_curvas <- plyr::rbind.fill(list_curvas)
+  
+  df_curvas <- df_curvas %>%
+    mutate(semana = rep(tab_names, each = 3600)) 
+  
+  df_curvas <- df_curvas %>% 
+  select(-plazo_en_anos) %>% 
+  pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
+  
+  return(df_curvas)
+}
+
+
+```
+
+Extrayendo informacion desde 2016
+```{r message=FALSE, warning=FALSE}
+
+datos_2016 <- prep_datos(ruta = ruta_curvas_2016)
+datos_2017 <- prep_datos(ruta = ruta_curvas_2017)
+datos_2018 <- prep_datos(ruta = ruta_curvas_2018)
+datos_2019 <- prep_datos(ruta = ruta_curvas_2019)
+datos_2020 <- prep_datos(ruta = ruta_curvas_2020)
+
+head(datos_2020)
+```
+Consolidando datos 
+```{r}
+
+datos_2016 <- datos_2016 %>% 
+  mutate(anno = 2016)
+datos_2017 <- datos_2017 %>% 
+  mutate(anno = 2017)
+datos_2018 <- datos_2018 %>% 
+  mutate(anno = 2018)
+datos_2019 <- datos_2019 %>% 
+  mutate(anno = 2019)
+datos_2020 <- datos_2020 %>% 
+  mutate(anno = 2020)
+
+
+datos_tasa <-
+  bind_rows(datos_2016) %>%
+  bind_rows(datos_2017) %>%
+  bind_rows(datos_2018) %>%
+  bind_rows(datos_2019) %>%
+  bind_rows(datos_2020) %>% 
+  mutate(anno = as.factor(anno), 
+         semana = as.factor(semana))
+
+head(datos_tasa)
+```
+Guardando el dataset final
+```{r}
+
+saveRDS(datos_tasa, file = paste0(processed_data, "/datos_tasa.Rds"))
+
+```
+
+

@@ -1,0 +1,36 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(tidyverse)
+```
+
+Rutas
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+Cargando datos
+
+```{r}
+
+datos = readRDS(paste0(processed_data, "/datos_tasa.Rds"))
+
+head(datos)
+```
+
+
+
+
+
+
