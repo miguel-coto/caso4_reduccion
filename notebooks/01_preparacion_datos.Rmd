@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r}
 library(here)
+library(lubridate)
 library(janitor)
 library(stringr)
 library(readxl)
@@ -80,11 +81,17 @@ prep_datos <- function(ruta) {
   df_curvas <- plyr::rbind.fill(list_curvas)
   
   df_curvas <- df_curvas %>%
-    mutate(semana = rep(tab_names, each = 3600)) 
+    mutate(semana_rango = rep(tab_names, each = 3600)) %>%
+    mutate(fecha = dmy(str_sub(semana_rango, start = -8))) %>%
+    mutate(
+      semana = week(fecha),
+      mes = month(fecha),
+      anno = year(fecha)
+    ) 
   
-  df_curvas <- df_curvas %>% 
-  select(-plazo_en_anos) %>% 
-  pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
+  # df_curvas <- df_curvas %>% 
+  # select(-plazo_en_anos) %>% 
+  # pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
   
   return(df_curvas)
 }
@@ -103,36 +110,75 @@ datos_2020 <- prep_datos(ruta = ruta_curvas_2020)
 
 head(datos_2020)
 ```
+
+
+
+
 Consolidando datos 
+
 ```{r}
 
-datos_2016 <- datos_2016 %>% 
-  mutate(anno = 2016)
-datos_2017 <- datos_2017 %>% 
-  mutate(anno = 2017)
-datos_2018 <- datos_2018 %>% 
-  mutate(anno = 2018)
-datos_2019 <- datos_2019 %>% 
-  mutate(anno = 2019)
-datos_2020 <- datos_2020 %>% 
-  mutate(anno = 2020)
-
-
-datos_tasa <-
+datos_tasa_EDA <-
   bind_rows(datos_2016) %>%
   bind_rows(datos_2017) %>%
   bind_rows(datos_2018) %>%
   bind_rows(datos_2019) %>%
   bind_rows(datos_2020) %>% 
   mutate(anno = as.factor(anno), 
-         semana = as.factor(semana))
+         mes = as.factor(mes), 
+         semana = as.factor(semana),
+         plazo = case_when(
+           plazo_en_anos <= 3 ~ "Corto pazo", 
+           plazo_en_anos > 3 & plazo_en_anos <= 6 ~ "Mediano pazo", 
+           plazo_en_anos > 6 ~ "Largo pazo" 
+         ))
 
-head(datos_tasa)
+head(datos_tasa_EDA)
 ```
+
+```{r}
+
+datos_curvas <- datos_2016 %>%
+  select(-plazo_en_anos) %>%
+  pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent) %>%
+  bind_rows(
+    datos_2017 %>%
+      select(-plazo_en_anos) %>%
+      pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
+  ) %>%
+  bind_rows(
+    datos_2018 %>%
+      select(-plazo_en_anos) %>%
+      pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
+  ) %>%
+  
+  bind_rows(
+    datos_2019 %>%
+      select(-plazo_en_anos) %>%
+      pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
+  ) %>%
+  
+  bind_rows(
+    datos_2020 %>%
+      select(-plazo_en_anos) %>%
+      pivot_wider(names_from = plazo_en_dias, values_from = tasa_percent)
+  ) %>%
+  mutate(anno = as.factor(anno),
+         mes = as.factor(mes),
+         semana = as.factor(semana))
+  
+
+head(datos_curvas)
+
+```
+
+
+
 Guardando el dataset final
 ```{r}
 
-saveRDS(datos_tasa, file = paste0(processed_data, "/datos_tasa.Rds"))
+saveRDS(datos_curvas, file = paste0(processed_data, "/datos_tasa.Rds"))
+saveRDS(datos_tasa_EDA, file = paste0(processed_data, "/datos_tasa_EDA.Rds"))
 
 ```
 
