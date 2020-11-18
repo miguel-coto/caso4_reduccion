@@ -86,6 +86,7 @@ prep_datos <- function(ruta) {
     mutate(
       semana = week(fecha),
       mes = month(fecha),
+      trimestre = quarter(fecha),
       anno = year(fecha)
     ) 
   
@@ -126,12 +127,14 @@ datos_tasa_EDA <-
   bind_rows(datos_2020) %>% 
   mutate(anno = as.factor(anno), 
          mes = as.factor(mes), 
+         trimestre = as.factor(trimestre), 
          semana = as.factor(semana),
          plazo = case_when(
-           plazo_en_anos <= 3 ~ "Corto pazo", 
-           plazo_en_anos > 3 & plazo_en_anos <= 6 ~ "Mediano pazo", 
-           plazo_en_anos > 6 ~ "Largo pazo" 
-         ))
+           plazo_en_anos <= 3 ~ "Corto plazo", 
+           plazo_en_anos > 3 & plazo_en_anos <= 6 ~ "Mediano plazo", 
+           plazo_en_anos > 6 ~ "Largo plazo" 
+         )) %>% 
+  mutate( plazo = factor(plazo, levels = c("Corto plazo", "Mediano plazo", "Largo plazo")))
 
 head(datos_tasa_EDA)
 ```

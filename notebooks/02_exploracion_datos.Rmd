@@ -1,0 +1,223 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(kableExtra)
+library(tidyverse)
+```
+
+Rutas
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+Cargando datos
+
+```{r}
+
+datos = readRDS(paste0(processed_data, "/datos_tasa_EDA.Rds"))
+
+head(datos)
+```
+# Exploracion de datos
+
+## Exploracion general
+
+```{r}
+
+datos %>% 
+  summarise(tasa = mean(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+```
+
+
+## Exploracion por año
+
+```{r}
+
+datos %>% 
+  group_by(anno) %>% 
+  summarise(tasa = mean(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+datos %>%
+  group_by(anno) %>%
+  summarise(n = n(), prop = mean(tasa_percent), sd = sd(tasa_percent)) %>%
+  ggplot(aes(x = anno, y = prop, fill = anno)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = prop - sd, ymax = prop + sd), width = 0.2) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Tasas promedio") +
+  xlab("Año") +
+  ggtitle("Tasas promedio por año")
+
+
+
+
+```
+Cuando se analiza el promedio de las tasas por año se aprecia que a partir de 2017 comienza 
+a subir, en 2018 encuentra el punto mas alto y luego en 2020 tiene tasas promedio cercanas al 2016. 
+Tambien vale la pena mencionar que el 2019 tiene mucha variabilidad y 2018 es el año con menos variabilidad. 
+
+
+
+
+## Exploracion por trimestre
+
+```{r}
+
+datos %>% 
+  group_by(trimestre) %>% 
+  summarise(tasa = mean(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+datos %>%
+  group_by(trimestre) %>%
+  summarise(n = n(), prop = mean(tasa_percent), sd = sd(tasa_percent)) %>%
+  ggplot(aes(x = trimestre, y = prop, fill = trimestre)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = prop - sd, ymax = prop + sd), width = 0.2) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Tasas promedio") +
+  xlab("Trimestre") +
+  ggtitle("Tasas promedio por trimestre")
+```
+Al analizar los promedios por trimestre se aprecia que no hay muchas diferencias entre ellos ni tampoco en 
+la variabilidad.
+
+## Exploracion por mes
+
+```{r}
+
+datos %>% 
+  group_by(mes) %>% 
+  summarise(tasa = mean(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+datos %>%
+  group_by(mes) %>%
+  summarise(n = n(), prop = mean(tasa_percent), sd = sd(tasa_percent)) %>%
+  ggplot(aes(x = mes, y = prop, fill = mes)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = prop - sd, ymax = prop + sd), width = 0.2) +
+  scale_fill_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(12)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Tasas promedio") +
+  xlab("Mes") +
+  ggtitle("Tasas promedio por mes")
+```
+Al hacer la exploración por mes, aunque sin muchas diferencias, es posible ver que Enero, Nomviembre 
+y Diciembre son los meses con las tasas promedio mas bajas mientras que Abril, Junio, Octubre y particularmente Julio
+es donde se tienen las tasas promedio mas altas. En términos de variabilidad es muy similar par todos los meses. 
+
+
+## Exploracion por semana
+
+```{r}
+
+datos %>% 
+  group_by(semana) %>% 
+  summarise(tasa = mean(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+datos %>%
+  group_by(semana) %>%
+  summarise(n = n(), prop = mean(tasa_percent), sd = sd(tasa_percent)) %>%
+  ggplot(aes(x = semana, y = prop, fill = semana)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = prop - sd, ymax = prop + sd), width = 0.2) +
+  scale_fill_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(53)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Tasas promedio") +
+  xlab("Semana") +
+  ggtitle("Tasas promedio por semana")
+
+```
+
+Cuando se analizan las tasas por semana se aprecia que no hay diferencias importantes. Aunque cabe resaltar
+que las 2 primeras semanas y la ultima de cada año se observa que poseen promedios mucho mas bajo que el resto. 
+
+
+
+## Exploracion por plazo
+
+```{r}
+
+datos %>% 
+  group_by(plazo) %>% 
+  summarise(tasa = mean(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+datos %>%
+  group_by(plazo) %>%
+  summarise(n = n(), prop = mean(tasa_percent), sd = sd(tasa_percent)) %>%
+  ggplot(aes(x = plazo, y = prop, fill = plazo)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = prop - sd, ymax = prop + sd), width = 0.2) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Tasas promedio por plazo")
+
+```
+Claramente, a mayor plazo mayo el el promedio de las tasas de interes.
+
+```{r}
+
+datos %>%
+  group_by(plazo, anno) %>%
+  summarise(n = n(), prop = mean(tasa_percent), sd = sd(tasa_percent)) %>%
+  ggplot(aes(x = plazo, y = prop, fill = plazo)) +
+  geom_col() +
+  geom_errorbar(aes(ymin = prop - sd, ymax = prop + sd), width = 0.2) +
+  facet_grid(~anno)+
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5),
+            axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Tasas promedio por plazo")
+
+
+```
+
+Al ver las tasas por plazo y año se observa con mas detalle que el 2018 y 2018 fueron los años 
+con mayores tasas en todos los plazos. El 2020 en cambio tiene las mas bajas y a corto plazo es el que tiene 
+las mas bajas de todo el periodo analizado. 
+
+
+
+
+
