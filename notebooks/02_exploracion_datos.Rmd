@@ -26,6 +26,7 @@ Cargando datos
 ```{r}
 
 datos = readRDS(paste0(processed_data, "/datos_tasa_EDA.Rds"))
+datos_long = readRDS(paste0(processed_data, "/datos_tasa.Rds"))
 
 head(datos)
 ```
@@ -218,6 +219,130 @@ con mayores tasas en todos los plazos. El 2020 en cambio tiene las mas bajas y a
 las mas bajas de todo el periodo analizado. 
 
 
+# Exploración por curvas
 
+## Curva general
+```{r}
+datos %>%
+  group_by(plazo_en_anos) %>%
+  summarise(prop = mean(tasa_percent)) %>%
+  ggplot(aes(x = plazo_en_anos, y = prop)) +
+  geom_line() +
+  #facet_grid(~anno)+
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas promedio")
+
+
+
+```
+
+Al promediar las tasas y crear la curva a 10 años se observa que no tiene un punto claro en donde se estabiliza o converge a un determinado valor.
+
+## Curvas por año
+```{r}
+datos %>%
+  group_by(plazo_en_anos, anno) %>%
+  summarise(prop = mean(tasa_percent)) %>%
+  ggplot(aes(x = plazo_en_anos, y = prop, color = anno)) +
+  geom_line() +
+  #facet_grid(~anno)+
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas promedio por año")
+
+```
+
+Al ver las curvas por año se aprecia que de los años 2017 al 2019 se tienen las tasas mas altas. Las tasas del 2020 son similares a las del 2015 y 2016 a excepcion de los primeros 2 años en donde el 2020 tiene un crecimiento mas lineal. 
+
+
+## Curvas por trimestre
+```{r}
+datos %>%
+  group_by(plazo_en_anos, trimestre) %>%
+  summarise(prop = mean(tasa_percent)) %>%
+  ggplot(aes(x = plazo_en_anos, y = prop, color = trimestre)) +
+  geom_line() +
+  #facet_grid(~anno)+
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas promedio por trimestre")
+
+```
+
+Al hacer las curvas por trimestres practicamente no hay ninguna diferencia entre ellas. 
+
+## Curvas por mes
+```{r}
+datos %>%
+  group_by(plazo_en_anos, mes) %>%
+  summarise(prop = mean(tasa_percent)) %>%
+  ggplot(aes(x = plazo_en_anos, y = prop, color = mes)) +
+  geom_line() +
+  #facet_grid(~anno)+
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(12)) +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas promedio por mes")
+
+```
+
+De igual forma, las curvas por mes no presentan mayores diferencias entre ellas. 
+
+## Curvas por semana
+```{r}
+datos %>%
+  group_by(plazo_en_anos, semana) %>%
+  summarise(prop = mean(tasa_percent)) %>%
+  ggplot(aes(x = plazo_en_anos, y = prop, color = semana)) +
+  geom_line() +
+  #facet_grid(~anno)+
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(53)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas promedio por semana")
+
+```
+
+Al ver las curvas por mes se aprecian algunas semanas en donde hay fluctuaciones importantes, particularmente para los plazos menores a un año.
+
+## Curvas por semana
+```{r}
+datos %>%
+  group_by(plazo_en_anos, fecha) %>%
+  summarise(prop = mean(tasa_percent)) %>%
+  ggplot(aes(x = plazo_en_anos, y = prop, color = as.factor(fecha))) +
+  geom_line() +
+  #facet_grid(~anno)+
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(254)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylab("Tasas promedio") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas promedio por semana")
+
+```
+
+
+Al ver todas las 254 curvas juntas se aprecia que hay mucha variación pues al inicio hay fluctuaciones, antes del año, y luego hay mucha variabilidad en las tasas segun el año en que se estimaron principalmente.
 
 
