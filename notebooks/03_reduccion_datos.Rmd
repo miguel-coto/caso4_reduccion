@@ -48,13 +48,14 @@ prin_comp <- prcomp(datos_pca, scale. = T)
 
 
 ```{r}
-biplot(prin_comp, scale = 0)
+biplot(prin_comp)
 
 ```
 
 ### Variabilidad explicada
 
 ```{r}
+
 #compute standard deviation of each principal component
 std_dev <- prin_comp$sdev
 
@@ -63,6 +64,7 @@ pr_var <- std_dev^2
 
 #proportion of variance explained
 prop_varex <- pr_var/sum(pr_var)
+#summary(prin_comp)
 
 #scree plot
 plot(prop_varex[1:10], xlab = "Principal Component",
@@ -77,6 +79,14 @@ plot(cumsum(prop_varex[1:10]), xlab = "Principal Component",
 ```
 
 Un componente explica mas del 90% de la variabilidad. Especificamente el 92.8%
+
+
+```{r}
+aporte_variables<-prin_comp$rotation
+```
+
+
+
 
 ### Correlacion entre datos y componentes
 

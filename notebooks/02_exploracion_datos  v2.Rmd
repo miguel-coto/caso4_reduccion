@@ -1,0 +1,468 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(kableExtra)
+library(tidyverse)
+```
+
+Rutas
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+Cargando datos
+
+```{r}
+
+datos = readRDS(paste0(processed_data, "/datos_tasa_EDA.Rds"))
+datos_long = readRDS(paste0(processed_data, "/datos_tasa.Rds"))
+
+#quitar palabara plazo para visualizar mejor
+datos$plazo<-gsub(" plazo","",datos$plazo)
+datos$plazo<- factor(datos$plazo,levels = c("Corto", "Mediano","Largo" ))
+
+head(datos)
+```
+
+# Exploracion de datos
+
+
+## Exploracion por plazo
+
+```{r}
+
+datos %>% 
+  group_by(plazo) %>% 
+  summarise(tasa_prom = mean(tasa_percent),
+            tasa_mediana = median(tasa_percent),
+            tasa_min = min(tasa_percent),
+            tasa_max = max(tasa_percent),
+            tasa_sd = sd(tasa_percent))
+
+
+
+datos %>%
+  ggplot(aes(x = plazo, y = tasa_percent, fill = plazo)) +
+  geom_boxplot()+
+  stat_summary(fun=mean, geom="point", shape=20, size=3, color="red", fill="red") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Tasas por plazo")
+   
+
+
+```
+Claramente, a mayor plazo mayor es el promedio y mediana de los rendimientos.
+
+
+
+```{r}
+
+datos %>%
+  ggplot(aes(x = anno, y = tasa_percent, fill = plazo)) +
+  geom_boxplot()+
+  stat_summary(fun=mean, geom="point", shape=20, size=3, color="red", fill="red") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Año") +
+  ggtitle("Tasas por plazo y año")+
+  facet_grid(~plazo)
+   
+
+
+```
+
+
+
+Al ver las tasas por plazo y año se observa con mas detalle que el 2018 y 2019 fueron los años 
+con mayores tasas en todos los plazos. El 2020 en cambio tiene las mas bajas y a corto plazo es el que tiene las mas bajas de todo el periodo analizado. 
+
+
+
+```{r}
+
+datos %>%
+  ggplot(aes(x = trimestre, y = tasa_percent, fill = plazo)) +
+  geom_boxplot()+
+  stat_summary(fun=mean, geom="point", shape=20, size=1, color="red", fill="red") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Trimestre") +
+  ggtitle("Tasas por plazo y año")+
+  facet_grid(plazo~anno)
+   
+
+
+```
+
+
+
+```{r}
+
+datos %>%
+  ggplot(aes(x = mes, y = tasa_percent, fill = plazo)) +
+  geom_boxplot()+
+  stat_summary(fun=mean, geom="point", shape=20, size=0.5, color="red", fill="red") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Mes") +
+  ggtitle("Tasas por plazo y año")+
+  facet_grid(plazo~anno)
+   
+
+
+```
+
+
+
+
+# Exploración por curvas
+
+##Curvas por año
+
+```{r}
+
+datos %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año - Corto Plazo")+
+  facet_grid(~anno)
+
+
+datos %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año - Mediano Plazo")+
+  facet_grid(~anno)
+  
+
+
+datos %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año - Largo plazo")+
+  facet_grid(~anno)
+
+```
+
+Para el corto y mediano plazo, al ver las curvas por año se aprecia que de los años 2017 al 2019 se tienen las tasas mas altas. Las tasas del 2020 son más bajas.
+
+
+##Curvas por mes
+
+```{r}
+
+datos %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por mes - Corto Plazo")+
+  facet_grid(~mes)
+
+
+datos %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por mes - Mediano Plazo")+
+  facet_grid(~mes)
+  
+
+
+datos %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por mes - Largo plazo")+
+  facet_grid(~mes)
+
+```
+
+
+##Curvas por trimestre
+
+```{r}
+
+datos %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por trimestre - Corto Plazo")+
+  facet_grid(~trimestre)
+
+
+datos %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por trimestre - Mediano Plazo")+
+  facet_grid(~trimestre)
+  
+
+
+datos %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por trimestre - Largo plazo")+
+  facet_grid(~trimestre)
+
+```
+
+
+
+## Curvas por semana
+```{r}
+
+datos %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas por semana - Corto Plazo")
+
+
+datos %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas por semana - Mediano Plazo")
+  
+
+
+datos %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas por semana - Largo plazo")
+
+```
+
+
+##Curvas por año y trimestres
+
+```{r}
+
+datos %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año y trimestre - Corto Plazo")+
+  facet_grid(trimestre~anno)
+
+
+
+datos %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año y trimestre - Mediano Plazo")+
+  facet_grid(trimestre~anno)
+  
+
+
+datos %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año y trimestre - Largo plazo")+
+  facet_grid(trimestre~anno)
+
+```
+
+
+
+
+
+
+##Curvas por año y mes
+
+```{r}
+
+datos %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año y mes - Corto Plazo")+
+  facet_grid(mes~anno)
+
+
+
+datos %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año y mes - Mediano Plazo")+
+  facet_grid(mes~anno)
+  
+
+
+datos %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos por año y mes - Largo plazo")+
+  facet_grid(mes~anno)
+
+```
+
+
+
+
+
+
+
+
+

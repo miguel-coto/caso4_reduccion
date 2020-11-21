@@ -130,9 +130,9 @@ datos_tasa_EDA <-
          trimestre = as.factor(trimestre), 
          semana = as.factor(semana),
          plazo = case_when(
-           plazo_en_anos <= 3 ~ "Corto plazo", 
-           plazo_en_anos > 3 & plazo_en_anos <= 6 ~ "Mediano plazo", 
-           plazo_en_anos > 6 ~ "Largo plazo" 
+           plazo_en_anos <= 1 ~ "Corto plazo", 
+           plazo_en_anos > 1 & plazo_en_anos <= 3 ~ "Mediano plazo", 
+           plazo_en_anos > 3 ~ "Largo plazo" 
          )) %>% 
   mutate( plazo = factor(plazo, levels = c("Corto plazo", "Mediano plazo", "Largo plazo")))
 
