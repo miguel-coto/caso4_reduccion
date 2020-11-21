@@ -349,7 +349,7 @@ datos %>%
 ```
 
 
-##Curvas por año y trimestres
+## Curvas por año y trimestres
 
 ```{r}
 
@@ -406,7 +406,7 @@ datos %>%
 
 
 
-##Curvas por año y mes
+## Curvas por año y mes
 
 ```{r}
 
