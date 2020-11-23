@@ -37,6 +37,7 @@ head(datos)
 
 # Exploracion de datos
 
+##Exploración de las curvas
 
 ## Exploracion por plazo
 
@@ -457,6 +458,250 @@ datos %>%
   facet_grid(mes~anno)
 
 ```
+
+## Variabilidad y volatilidad
+
+**Variabilidad**
+
+
+- Plazos por fechas
+
+```{r}
+
+datos2<-datos %>% 
+  group_by(semana_rango) %>% 
+  mutate(tasa_ant=lag(tasa_percent,1),
+         variab=log(tasa_percent/tasa_ant))
+
+```
+
+```{r}
+
+datos2 %>%
+  ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.001,0.03)+
+  ylab("Variabilidad") +
+  xlab("Plazo") +
+  ggtitle("Variabilidad curvas de tasas por semana - Todos los plazos")
+
+
+datos2 %>%
+  ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.001,0.03)+
+  ylab("Variabilidad") +
+  xlab("Plazo") +
+  ggtitle("Variabilidad curvas de tasas por semana - Todos los plazos")+
+  facet_grid(~anno)
+
+
+
+
+datos2 %>%
+  ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.001,0.03)+
+  ylab("Variabilidad") +
+  xlab("Plazo") +
+  ggtitle("Variabilidad curvas de tasas por semana y plazo")+
+  facet_grid(~plazo)
+
+
+datos2 %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.001,0.03)+
+  ylab("Variabilidad") +
+  xlab("Plazo") +
+  ggtitle("Variabilidad curvas de tasas por semana - Corto Plazo")+
+  facet_grid(~anno)
+
+
+
+datos2 %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.001,0.03)+
+  ylab("Variabilidad") +
+  xlab("Plazo") +
+  ggtitle("Variabilidad curvas de tasas por semana - Mediano Plazo")+
+  facet_grid(~anno)
+
+
+
+datos2 %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.001,0.03)+
+  ylab("Variabilidad") +
+  xlab("Plazo") +
+  ggtitle("Variabilidad curvas de tasas por semana - Largo Plazo")+
+  facet_grid(~anno)
+
+
+```
+
+**Volatilidad**
+
+
+- Plazos por fechas
+
+General
+
+```{r}
+datos3<-datos2 %>% 
+  select(semana_rango,fecha,semana,mes,trimestre,anno,plazo,variab) %>% 
+  group_by(semana_rango) %>% 
+  mutate(obs=row_number())
+
+#para agrupar y calcular la desviacion de la variabilidad cada 10 observaciones
+datos3$GRP<-rep(c(1:360),each=10,257)
+
+#volatilidad por semana
+datos4<-datos3 %>% 
+  group_by(semana_rango,fecha,semana,mes,trimestre,anno,GRP) %>% 
+  summarise(
+    desv=sd(variab,na.rm = TRUE)
+  )
+
+datos4 %>%
+  ggplot(aes(x = GRP, y = desv, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.00001,0.01)+
+  ylab("Volatilidad") +
+  xlab("") +
+  ggtitle("Volatilidad curvas de tasas por semana - Todos los plazos")
+
+
+datos4 %>%
+  ggplot(aes(x = GRP, y = desv, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.00001,0.01)+
+  ylab("Volatilidad") +
+  xlab("") +
+  ggtitle("Volatilidad curvas de tasas por semana - Todos los plazos")+
+  facet_grid(~anno)
+
+```
+
+
+
+
+```{r}
+#Volatilidad por plazo
+datos5<-datos3 %>% 
+  group_by(semana_rango,fecha,semana,mes,trimestre,anno,plazo,GRP) %>% 
+  summarise(
+    desv=sd(variab,na.rm = TRUE)
+  )
+
+
+datos5 %>%
+  ggplot(aes(x = GRP, y = desv, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.00001,0.01)+
+  ylab("Volatilidad") +
+  xlab("") +
+  ggtitle("Volatilidad curvas de tasas por semana y plazos")+
+  facet_grid(~plazo)
+
+
+
+datos5 %>%
+  filter(plazo=="Corto") %>% 
+  ggplot(aes(x = GRP, y = desv, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.00001,0.01)+
+  ylab("Volatilidad") +
+  xlab(" ") +
+  ggtitle("Volatilidad curvas de tasas por semana - Corto Plazo")+
+  facet_grid(~anno)
+
+
+
+datos5 %>%
+  filter(plazo=="Mediano") %>% 
+  ggplot(aes(x = GRP, y = desv, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.00001,0.01)+
+  ylab("Volatilidad") +
+  xlab(" ") +
+  ggtitle("Volatilidad curvas de tasas por semana - Mediano Plazo")+
+  facet_grid(~anno)
+
+
+
+datos5 %>%
+  filter(plazo=="Largo") %>% 
+  ggplot(aes(x = GRP, y = desv, color = as.factor(fecha))) +
+  geom_line() +
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(-0.00001,0.01)+
+  ylab("Volatilidad") +
+  xlab(" ") +
+  ggtitle("Volatilidad curvas de tasas por semana - Largo Plazo")+
+  facet_grid(~anno)
+
+
+
+```
+
+
+
+
+
+
 
 
 
