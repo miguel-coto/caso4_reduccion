@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
+```{r,message=FALSE}
 library(here)
 library(janitor)
 library(stringr)
@@ -13,6 +13,7 @@ library(tidyverse)
 ```
 
 Rutas
+
 ```{r}
 
 raw_data <- here("data", "raw")
@@ -52,57 +53,70 @@ biplot(prin_comp)
 
 ```
 
+### Valores propios
+
+```{r}
+#standard deviation
+std_dev <- prin_comp$sdev
+
+#variance / valores propios
+pr_var <- std_dev^2
+
+plot(pr_var[1:10],
+     main = "Gráfico de sedimentación",
+     type = "b",
+     col = "red",
+     ylab="Valores Propios",
+     xlab = "Componentes")
+grid()
+```
+Según el gráfico de sedimentación se podrían sugerir 2 o 3 componentes.
+
 ### Variabilidad explicada
 
 ```{r}
-
-#compute standard deviation of each principal component
-std_dev <- prin_comp$sdev
-
-#compute variance
-pr_var <- std_dev^2
-
 #proportion of variance explained
 prop_varex <- pr_var/sum(pr_var)
+
 #summary(prin_comp)
 
+df_sum<-data.frame(Componente=c(1:10),
+                   valores_propios=round(pr_var[1:10],1),
+                   porc_explicado= round(prop_varex[1:10]*100,1),
+                   porc_acum= cumsum(round(prop_varex[1:10]*100,1))
+                   )
+df_sum
+
+
 #scree plot
-plot(prop_varex[1:10], xlab = "Principal Component",
-             ylab = "Proportion of Variance Explained",
-             type = "b")
+plot(prop_varex[1:10], xlab = "Componentes",
+             ylab = "Proporción de variancia explicada",
+             type = "b",
+              col = "red")
+grid()
 
 #cumulative scree plot
-plot(cumsum(prop_varex[1:10]), xlab = "Principal Component",
-              ylab = "Cumulative Proportion of Variance Explained",
-              type = "b")
-
+plot(cumsum(prop_varex[1:10]), xlab = "Componentes",
+              ylab = "Proporción de variancia explicada acumulada",
+              type = "b",
+              col = "red")
+grid()
 ```
 
-Un componente explica mas del 90% de la variabilidad. Especificamente el 92.8%
-
-
-```{r}
-aporte_variables<-prin_comp$rotation
-```
-
+Se puede apreciar que el primer componente explica el 92.7%, el segundo el 5.6% y el tercero el 1.1%, en conjunto los tres primeros componentes principales explican el 99.4% de la variancia total. El nivel y la pendiente tienen la mayor participación en la explicación de la variabilidad. El 98.3% de la variancia total de los datos se explica a partir de los desplazamientos paralelos y de la pendiente de la curva, mientras que la curvatura explica sólo el 1.1% de los movimientos.
 
 
 
 ### Correlacion entre datos y componentes
 
 ```{r}
-
 cor_pca = cor(datos_pca, prin_comp$x)
 
-round(apply(cor_pca[,1:10], 2, mean),2)
-
-#plot(cor_pca[,1])
 
 tibble(dias = 1:3600,
-      plazo = c(rep("Corto plazo", 1080),
-                 rep("Mediano plazo", 1080),
-                 rep("Largo plazo", 1440)
-                 ),
+      plazo = factor(c(rep("corto", 360),
+                 rep("mediano", 720),
+                 rep("largo", 2520)),levels=c("corto","mediano","largo")),
        correlacion = cor_pca[,1]
        ) %>% 
   ggplot(aes(x = dias, y = correlacion, color = plazo))+
@@ -110,10 +124,41 @@ tibble(dias = 1:3600,
   scale_color_brewer(palette = "Dark2") +
   theme(legend.title = element_blank(),
         plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
   ylab("Correlación") +
   xlab("Plazo") +
-  ggtitle("Correlaciones del componente con las variables")
+  ggtitle("Correlaciones del primer componente con las variables")
+
+
+tibble(dias = 1:3600,
+      plazo = factor(c(rep("corto", 360),
+                 rep("mediano", 720),
+                 rep("largo", 2520)),levels=c("corto","mediano","largo")),
+       correlacion = cor_pca[,2]
+       ) %>% 
+  ggplot(aes(x = dias, y = correlacion, color = plazo))+
+  geom_point()+
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Correlación") +
+  xlab("Plazo") +
+  ggtitle("Correlaciones del segundo componente con las variables")
+
+
+tibble(dias = 1:3600,
+      plazo = factor(c(rep("corto", 360),
+                 rep("mediano", 720),
+                 rep("largo", 2520)),levels=c("corto","mediano","largo")),
+       correlacion = cor_pca[,3]
+       ) %>% 
+  ggplot(aes(x = dias, y = correlacion, color = plazo))+
+  geom_point()+
+  scale_color_brewer(palette = "Dark2") +
+  theme(legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Correlación") +
+  xlab("Plazo") +
+  ggtitle("Correlaciones del tercer componente con las variables")
 
 ```
 
@@ -121,6 +166,98 @@ El primer componente tiene una correlacion promedio de 0.96 con respecto a las
 3600 variables.
 Al graficar las correlaciones del componenete para cada variable se observa que
 varia entre .88 y .99 y que las correlaciones mas altas se ubican en el mediano plazo. Es decir, el componente captura mejor la variabilidad de las tasas a mediano y largo plazo.
+
+
+
+
+
+### Vectores propios
+
+```{r}
+vectores_prop<-prin_comp$rotation
+head(vectores_prop[,1:10])
+```
+- Primer Componente (Nivel)
+
+las cargas del primer componente principal son todas positivas y similares entre sí. En
+nuestro caso este factor explica un 92.7%, de la variabilidad total, siendo claramente el más importante. El primer factor es casi plano.
+
+```{r}
+pl<-c(rep("seagreen",360),rep("darkorange3",720),rep("mediumpurple3",2520))
+
+plot(vectores_prop[,1],
+     ylim = c(0.01,0.02),
+     xlab = "Plazo",
+     ylab = "Carga Componente 1",
+     col=pl,
+     main = "Vectores propios - primer componente")
+legend("bottomright",legend = c("corto","mediano","largo"), col = c("seagreen","darkorange3","mediumpurple3"),bty="n" ,lty = 1, lwd = 1)
+grid()
+
+```
+- Segundo Componente (pendiente)
+
+Para los vencimientos a corto plazo prevalecen los valores negativos y para los vencimientos a largo plazo las cargas son positivas, signos opuestos en ambos extremos. Este factor contribuye a explicar la variabilidad de las tasas en un 5.6% 
+
+
+```{r}
+plot(vectores_prop[,2],
+     xlab = "Plazo",
+     ylab = "Carga Componente 2",
+     col=pl,
+     main = "Vectores propios - segundo componente")
+legend("bottomright",legend = c("corto","mediano","largo"), col = c("seagreen","darkorange3","mediumpurple3"),bty="n" ,lty = 1, lwd = 1)
+grid()
+
+```
+- Tercer Componente (curvatura)
+
+El tercer componente, contribuye a la variabilidad total en un 1.1% y se le asocia a cambios en la concavidad de la curva. Signo contrario en el centro que el de los extremos.
+
+
+```{r}
+plot(vectores_prop[,3],
+     xlab = "Plazo",
+     ylab = "Carga Componente 3",
+     col=pl,
+     main = "Vectores propios - tercer componente")
+legend("topright",legend = c("corto","mediano","largo"), col = c("seagreen","darkorange3","mediumpurple3"),bty="n" ,lty = 1, lwd = 1)
+grid()
+```
+
+
+```{r}
+plot(vectores_prop[,2],
+     xlab = "Plazo",
+     ylab = "Carga",
+     col="red",
+     main = "Vectores propios - primeros tres componentes",
+     type = "l",
+     ylim = c(-0.03,0.06)
+     )
+
+points(vectores_prop[,3],col="green",type = "l")
+points(vectores_prop[,1],col="blue",type = "l")
+abline(v=360,col="gray",lty=2)
+abline(v=1080,col="gray",lty=2)
+legend("topright",legend = c("nivel","pendiente","curvatura"), col = c("blue","red","green"),bty="n" ,lty = 1, lwd = 1)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Independent Component Analysis (ICA)
 
