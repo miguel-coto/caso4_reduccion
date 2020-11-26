@@ -244,8 +244,13 @@ legend("topright",legend = c("nivel","pendiente","curvatura"), col = c("blue","r
 
 ```
 
+Exportar los componentes
 
+```{r}
+comp<-data.frame(prin_comp$x[,1:3])
+saveRDS(comp, file = paste0(processed_data, "/componentes.Rds"))
 
+```
 
 
 

@@ -1,0 +1,98 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r,message=FALSE}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(fastICA)
+library(tidyverse)
+```
+
+Rutas
+
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+Cargando datos
+
+```{r}
+
+componentes = readRDS(paste0(processed_data, "/componentes.Rds"))
+
+```
+
+
+
+```{r}
+summary(componentes)
+```
+
+### Reescalar los componentes
+
+
+```{r}
+componentes$PC1_r<- (componentes$PC1 - min(componentes$PC1))/(max(componentes$PC1)-min(componentes$PC1))*10
+componentes$PC2_r<- (componentes$PC2 - min(componentes$PC2))/(max(componentes$PC2)-min(componentes$PC2))*10
+componentes$PC3_r<- (componentes$PC3 - min(componentes$PC3))/(max(componentes$PC3)-min(componentes$PC3))*10
+
+summary(componentes)
+
+```
+
+
+### Indicador
+
+```{r}
+#suma de rankings
+componentes<-componentes %>% mutate(IR=PC1_r+PC2_r+PC3_r)
+```
+
+
+### Escalas
+
+
+
+```{r}
+#percentiles
+
+per<-quantile(componentes$IR,c(0.2,0.4,0.6,0.8))
+per
+
+componentes<-componentes %>% 
+  mutate(nivel=case_when(
+    IR<=per[1]~"muy alta",
+    IR>per[1]&IR<=per[2]~ "alta",
+    IR>per[2]&IR<=per[3]~ "moderada",
+    IR>per[3]&IR<=per[4]~ "baja",
+    IR>per[4]~ "muy baja",
+  ))
+
+componentes$nivel<-factor(componentes$nivel,levels = c("muy baja","baja","moderada","alta","muy alta"))
+
+table(componentes$nivel)
+```
+
+
+### Descriptivo
+
+incluir datos con plazos
+
+
+### Validación
+
+
+
+
+
+
+
+
