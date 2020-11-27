@@ -583,7 +583,7 @@ datos3<-datos2 %>%
   mutate(obs=row_number())
 
 #para agrupar y calcular la desviacion de la variabilidad cada 10 observaciones
-datos3$GRP<-rep(c(1:360),each=10,257)
+datos3$GRP<-rep(c(1:360),each=10,256)
 
 #volatilidad por semana
 datos4<-datos3 %>% 
