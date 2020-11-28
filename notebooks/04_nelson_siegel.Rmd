@@ -1,0 +1,210 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r,message=FALSE}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(YieldCurve)
+library(xts)
+library(tidyverse)
+```
+
+Rutas
+
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+Cargando datos
+
+```{r}
+
+datos = readRDS(paste0(processed_data, "/datos_tasa.Rds"))
+datos_eda = readRDS(paste0(processed_data, "/datos_tasa_EDA.Rds"))
+
+head(datos)
+```
+
+
+# Modelo Nelson-Siegel
+```{r}
+
+datos_ts <- datos %>% 
+  select(-c(semana_rango, semana, mes, trimestre, anno))
+
+datos_ts <- xts(datos_ts[,-1], order.by = as.Date(datos_ts$fecha))
+
+maturity = seq(from = 10, to= 36000, by = 10)/3600
+
+NSParameters <- Nelson.Siegel( rate=datos_ts ,maturity=maturity)
+
+```
+
+
+```{r}
+
+hist(NSParameters$beta_0, main = "Nivel")
+hist(NSParameters$beta_1, main = "Pendiente")
+hist(NSParameters$beta_2, main = "Curvatura")
+
+```
+```{r}
+
+indicador_general <- NSParameters %>%
+  as_tibble() %>%
+  mutate(
+    fecha = datos$fecha,
+    corto = 1,
+    mediano = 3,
+    largo = 10,
+    index = row_number()
+  ) %>%
+  mutate(
+    indicador_corto = beta_0 + beta_1 * ((1 - exp(-lambda * corto)) / lambda * corto) + beta_2 *
+      (((
+        1 - exp(-lambda * corto)
+      ) / lambda * corto) - exp(-lambda * corto)) ,
+    indicador_mediano = beta_0 + beta_1 * ((1 - exp(-lambda * mediano)) /
+                                             lambda * mediano) + beta_2 * (((
+                                               1 - exp(-lambda * mediano)
+                                             ) / lambda * mediano) - exp(-lambda * mediano)) ,
+    indicador_largo = beta_0 + beta_1 * ((1 - exp(-lambda * largo)) / lambda *
+                                           largo) + beta_2 * (((
+                                             1 - exp(-lambda * largo)
+                                           ) / lambda * largo) - exp(-lambda * largo))
+  )
+
+
+indicador_general %>% 
+  ggplot(aes(y = indicador_corto, x = fecha))+
+  geom_line()
+
+indicador_general %>% 
+  ggplot(aes(y = indicador_mediano, x = fecha))+
+  geom_line()
+
+indicador_general %>% 
+  ggplot(aes(y = indicador_largo, x = fecha))+
+  geom_line()
+
+```
+
+
+```{r}
+y <- NSrates(NSParameters[10,], maturity)
+
+plot(maturity,datos_ts[10,],main="Fitting Nelson-Siegel yield curve",
+xlab=c("Pillars in months"), type="o")
+lines(maturity,y, col=2)
+legend("topleft",legend=c("observed yield curve","fitted yield curve"),
+col=c(1,2),lty=1)
+grid()
+
+```
+
+
+```{r}
+
+mean_params <- xts(matrix(apply(NSParameters, 2, mean), nrow=1), order.by = as.Date("2020-01-01"))
+median_params <- xts(matrix(apply(NSParameters, 2, median), nrow=1), order.by = as.Date("2020-01-01"))
+
+y_mean <- NSrates(mean_params, maturity)
+real_mean <- apply(datos_ts, 1, mean)
+
+```
+
+
+## Modelo por plazo
+### Corto plazo (1 año)
+```{r}
+
+datos_ts_corto <- datos_ts[,1:360]
+
+maturity_corto = seq(from = 10, to= 3600, by = 10)/3600
+
+NSParameters_corto <- Nelson.Siegel( rate=datos_ts_corto ,maturity=maturity_corto)
+
+```
+
+```{r}
+
+hist(NSParameters_corto$beta_0, main = "Nivel")
+hist(NSParameters_corto$beta_1, main = "Pendiente")
+hist(NSParameters_corto$beta_2, main = "Curvatura")
+
+```
+
+```{r}
+
+indicador_corto <- NSParameters_corto %>%
+  as_tibble() %>%
+  mutate(
+    fecha = datos$fecha,
+    corto = 1,
+    #mediano = 3,
+    #largo = 10,
+    index = row_number()
+  ) %>%
+  mutate(
+    indicador_corto = beta_0 + beta_1 * ((1 - exp(-lambda * corto)) / lambda * corto) + beta_2 *
+      (((
+        1 - exp(-lambda * corto)
+      ) / lambda * corto) - exp(-lambda * corto))
+  )
+
+
+indicador_corto %>% 
+  ggplot(aes(y = indicador_corto, x = fecha))+
+  geom_line()
+
+
+```
+
+
+
+### Mediano plazo (1 a 3 años)
+```{r}
+
+datos_ts_mediano <- datos_ts[,361:1080]
+
+maturity_mediano = seq(from = 3610, to= 10800, by = 10)/3600
+
+NSParameters_mediano <- Nelson.Siegel( rate=datos_ts_mediano ,maturity=maturity_mediano)
+
+```
+
+```{r}
+
+hist(NSParameters_mediano$beta_0, main = "Nivel")
+hist(NSParameters_mediano$beta_1, main = "Pendiente")
+hist(NSParameters_mediano$beta_2, main = "Curvatura")
+
+```
+
+
+### Corto plazo (3+ años)
+```{r}
+
+datos_ts_largo <- datos_ts[,1081:3600]
+
+maturity_largo = seq(from = 10810, to= 36000, by = 10)/3600
+
+NSParameters_largo <- Nelson.Siegel( rate=datos_ts_largo ,maturity=maturity_largo)
+
+```
+
+```{r}
+
+hist(NSParameters_largo$beta_0, main = "Nivel")
+hist(NSParameters_largo$beta_1, main = "Pendiente")
+hist(NSParameters_largo$beta_2, main = "Curvatura")
+
+```
