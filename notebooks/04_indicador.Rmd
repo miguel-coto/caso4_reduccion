@@ -3,12 +3,8 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r,message=FALSE}
+```{r,message=FALSE,warning=FALSE}
 library(here)
-library(janitor)
-library(stringr)
-library(readxl)
-library(fastICA)
 library(tidyverse)
 ```
 
@@ -53,41 +49,61 @@ summary(componentes)
 
 ```{r}
 #suma de rankings
-componentes<-componentes %>% mutate(IR=PC1_r+PC2_r+PC3_r)
+componentes<-componentes %>% mutate(IR_1=PC1_r+PC2_r+PC3_r)
+
+#suma ponderad
+#usando la proporcion de variancia explicada por cada componente
+
+##DUDA: SE USA EL PC O SE TIENE QUE ESTANDARIZAR O REESCALAR?????????
+componentes<-componentes %>% mutate(IR_2= 0.93*PC1 + 0.056*PC2 + 0.011*PC3)
+
+
+#Estandarizar indicador final
+
+componentes<-componentes %>% 
+  mutate(
+    IR1_S=(IR_1-mean(IR_1))/sd(IR_1),
+    IR2_S=(IR_2-mean(IR_2))/sd(IR_2)
+  )
+
+
+
 ```
 
 
-### Escalas
 
+### Validación 
 
 
 ```{r}
-#percentiles
+componentes %>%
+  ggplot(aes(x = fecha, y = IR1_S)) +
+  geom_line() +
+  geom_line(y=0,col="red",linetype = "dashed") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Indicador") +
+  xlab("Fecha") +
+  ggtitle("Indicador 1")
+```
 
-per<-quantile(componentes$IR,c(0.2,0.4,0.6,0.8))
-per
-
-componentes<-componentes %>% 
-  mutate(nivel=case_when(
-    IR<=per[1]~"muy alta",
-    IR>per[1]&IR<=per[2]~ "alta",
-    IR>per[2]&IR<=per[3]~ "moderada",
-    IR>per[3]&IR<=per[4]~ "baja",
-    IR>per[4]~ "muy baja",
-  ))
-
-componentes$nivel<-factor(componentes$nivel,levels = c("muy baja","baja","moderada","alta","muy alta"))
-
-table(componentes$nivel)
+```{r}
+componentes %>%
+  ggplot(aes(x = fecha, y = IR2_S)) +
+  geom_line() +
+  geom_line(y=0,col="red",linetype = "dashed") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Indicador") +
+  xlab("Fecha") +
+  ggtitle("Indicador 2")
 ```
 
 
-### Descriptivo
 
-incluir datos con plazos
+### Calibración
 
 
-### Validación
 
 
 

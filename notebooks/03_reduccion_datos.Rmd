@@ -253,7 +253,7 @@ dat<-datos %>% select(semana_rango,fecha)
 comp<-data.frame(prin_comp$x[,1:3])
 df<-data.frame(dat,comp)
 
-saveRDS(comp, file = paste0(processed_data, "/componentes.Rds"))
+saveRDS(df, file = paste0(processed_data, "/componentes.Rds"))
 
 ```
 
