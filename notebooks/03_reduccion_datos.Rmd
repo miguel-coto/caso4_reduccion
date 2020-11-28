@@ -1,9 +1,11 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
-```{r,message=FALSE}
+```{r,message=FALSE,warning=FALSE}
 library(here)
 library(janitor)
 library(stringr)
@@ -247,81 +249,13 @@ legend("topright",legend = c("nivel","pendiente","curvatura"), col = c("blue","r
 Exportar los componentes
 
 ```{r}
+dat<-datos %>% select(semana_rango,fecha)
 comp<-data.frame(prin_comp$x[,1:3])
+df<-data.frame(dat,comp)
+
 saveRDS(comp, file = paste0(processed_data, "/componentes.Rds"))
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Independent Component Analysis (ICA)
-
-
-### Calculo del modelo
-
-```{r}
-
-ica = icafast(datos_pca, nc = 10, center = T)
-
-```
-
-### Variabilidad explicada
-```{r}
-
-plot(ica$vafs, main = "Pre-processed data")
-#plot(ica$X %*% ica$K, main = "PCA components")
-#plot(ica$S, main = "ICA components")
-
-
-```
-
-Un componente explica mas del 75% de la variabilidad. Especificamente el 75.2%
-
-### Correlacion entre datos y componentes
-
-```{r}
-
-cor_ica = cor(datos_pca, ica$S)
-
-apply(-cor_ica, 2, mean)
-
-#plot(cor_ica[,1])
-
-tibble(dias = 1:3600,
-      plazo = c(rep("Corto plazo", 1080),
-                 rep("Mediano plazo", 1080),
-                 rep("Largo plazo", 1440)
-                 ),
-       correlacion = -cor_ica[,1]
-       ) %>% 
-  ggplot(aes(x = dias, y = correlacion, color = plazo))+
-  geom_point()+
-  scale_color_brewer(palette = "Dark2") +
-  theme(legend.title = element_blank(),
-        plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
-  ylab("Correlación") +
-  xlab("Plazo") +
-  ggtitle("Correlaciones del componente con las variables")
-
-```
-
-El primer componente tiene una correlacion promedio de 0.85 con respecto a las
-3600 variables.
-Al graficar las correlaciones del componenete para cada variable se observa que
-varia entre .73 y .94 y que las correlaciones mas altas se ubican en el corto plazo. Es decir, el componente captura mejor la variabilidad de las tasas en los corto periodos que en el mediano y largo plazo.
-
-
 
 
 
