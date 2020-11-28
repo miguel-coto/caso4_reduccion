@@ -28,45 +28,22 @@ componentes = readRDS(paste0(processed_data, "/componentes.Rds"))
 
 
 
-```{r}
-summary(componentes)
-```
-
-### Reescalar los componentes
-
-
-```{r}
-componentes$PC1_r<- (componentes$PC1 - min(componentes$PC1))/(max(componentes$PC1)-min(componentes$PC1))*10
-componentes$PC2_r<- (componentes$PC2 - min(componentes$PC2))/(max(componentes$PC2)-min(componentes$PC2))*10
-componentes$PC3_r<- (componentes$PC3 - min(componentes$PC3))/(max(componentes$PC3)-min(componentes$PC3))*10
-
-summary(componentes)
-
-```
-
-
 ### Indicador
 
 ```{r}
-#suma de rankings
-componentes<-componentes %>% mutate(IR_1=PC1_r+PC2_r+PC3_r)
 
-#suma ponderad
+#suma ponderado
 #usando la proporcion de variancia explicada por cada componente
 
-##DUDA: SE USA EL PC O SE TIENE QUE ESTANDARIZAR O REESCALAR?????????
-componentes<-componentes %>% mutate(IR_2= 0.93*PC1 + 0.056*PC2 + 0.011*PC3)
+componentes<-componentes %>% mutate(IR= 0.93*PC1 + 0.056*PC2 + 0.011*PC3)
 
 
 #Estandarizar indicador final
 
 componentes<-componentes %>% 
-  mutate(
-    IR1_S=(IR_1-mean(IR_1))/sd(IR_1),
-    IR2_S=(IR_2-mean(IR_2))/sd(IR_2)
-  )
+  mutate(IR_S=(IR-mean(IR))/sd(IR))
 
-
+summary(componentes)
 
 ```
 
@@ -77,27 +54,26 @@ componentes<-componentes %>%
 
 ```{r}
 componentes %>%
-  ggplot(aes(x = fecha, y = IR1_S)) +
+  ggplot(aes(x = fecha, y = IR_S)) +
   geom_line() +
   geom_line(y=0,col="red",linetype = "dashed") +
   theme(legend.position = "none",
         plot.title = element_text(hjust = 0.5)) +
   ylab("Indicador") +
   xlab("Fecha") +
-  ggtitle("Indicador 1")
+  ggtitle("Indicador")
 ```
 
 ```{r}
-componentes %>%
-  ggplot(aes(x = fecha, y = IR2_S)) +
-  geom_line() +
-  geom_line(y=0,col="red",linetype = "dashed") +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5)) +
-  ylab("Indicador") +
-  xlab("Fecha") +
-  ggtitle("Indicador 2")
+
+#serie<-ts(componentes$IR_S, frequency = 7,start=c(2015,13))
+
+
 ```
+
+
+
+
 
 
 
