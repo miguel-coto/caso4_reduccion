@@ -3,12 +3,8 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r,message=FALSE}
+```{r,message=FALSE,warning=FALSE}
 library(here)
-library(janitor)
-library(stringr)
-library(readxl)
-library(fastICA)
 library(tidyverse)
 ```
 
@@ -32,62 +28,58 @@ componentes = readRDS(paste0(processed_data, "/componentes.Rds"))
 
 
 
-```{r}
-summary(componentes)
-```
-
-### Reescalar los componentes
-
-
-```{r}
-componentes$PC1_r<- (componentes$PC1 - min(componentes$PC1))/(max(componentes$PC1)-min(componentes$PC1))*10
-componentes$PC2_r<- (componentes$PC2 - min(componentes$PC2))/(max(componentes$PC2)-min(componentes$PC2))*10
-componentes$PC3_r<- (componentes$PC3 - min(componentes$PC3))/(max(componentes$PC3)-min(componentes$PC3))*10
-
-summary(componentes)
-
-```
-
-
 ### Indicador
 
 ```{r}
-#suma de rankings
-componentes<-componentes %>% mutate(IR=PC1_r+PC2_r+PC3_r)
+
+#suma ponderado
+#usando la proporcion de variancia explicada por cada componente
+
+componentes<-componentes %>% mutate(IR= 0.93*PC1 + 0.056*PC2 + 0.011*PC3)
+
+
+#Estandarizar indicador final
+
+componentes<-componentes %>% 
+  mutate(IR_S=(IR-mean(IR))/sd(IR))
+
+summary(componentes)
+
 ```
 
 
-### Escalas
 
+### Validación 
 
 
 ```{r}
-#percentiles
+componentes %>%
+  ggplot(aes(x = fecha, y = IR_S)) +
+  geom_line() +
+  geom_line(y=0,col="red",linetype = "dashed") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("Indicador") +
+  xlab("Fecha") +
+  ggtitle("Indicador")
+```
 
-per<-quantile(componentes$IR,c(0.2,0.4,0.6,0.8))
-per
+```{r}
 
-componentes<-componentes %>% 
-  mutate(nivel=case_when(
-    IR<=per[1]~"muy alta",
-    IR>per[1]&IR<=per[2]~ "alta",
-    IR>per[2]&IR<=per[3]~ "moderada",
-    IR>per[3]&IR<=per[4]~ "baja",
-    IR>per[4]~ "muy baja",
-  ))
+#serie<-ts(componentes$IR_S, frequency = 7,start=c(2015,13))
 
-componentes$nivel<-factor(componentes$nivel,levels = c("muy baja","baja","moderada","alta","muy alta"))
 
-table(componentes$nivel)
 ```
 
 
-### Descriptivo
-
-incluir datos con plazos
 
 
-### Validación
+
+
+
+### Calibración
+
+
 
 
 
