@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r,message=FALSE}
+library(here)
+library(janitor)
+library(stringr)
+library(readxl)
+library(YieldCurve)
+library(xts)
+library(umap)
+library(tidyverse)
+```
+
+Rutas
+
+```{r}
+
+raw_data <- here("data", "raw")
+interim_data <- here("data", "interim")
+processed_data <- here("data", "processed")
+
+```
+
+Cargando datos
+
+```{r}
+
+datos = readRDS(paste0(processed_data, "/datos_tasa.Rds"))
+datos_eda = readRDS(paste0(processed_data, "/datos_tasa_EDA.Rds"))
+
+head(datos)
+```
+
+
+```{r}
+datos_ts <- datos %>% 
+  select(-c(fecha, semana_rango, semana, mes, trimestre, anno))
+
+```
+
+```{r}
+custom.config = umap.defaults
+custom.config$n_components = 3
+custom.config$n_neighbors = 20
+  
+  
+curvas.umap <- umap(datos_ts, config = custom.config)
+
+head(curvas.umap$layout, 3)
+```
+
+```{r}
+
+curvas.umap.res = curvas.umap$layout %>% 
+  as_tibble() %>% 
+  bind_cols(datos %>% 
+              select(fecha, semana_rango, semana, mes, trimestre, anno))
+
+curvas.umap.res %>% 
+  ggplot(aes(x = V1, y = V2, color = anno)) +
+  geom_point()+
+  scale_color_brewer(palette = "Dark2")
+
+curvas.umap.res %>% 
+  ggplot(aes(x = V1, y = V3, color = anno)) +
+  geom_point()+
+  scale_color_brewer(palette = "Dark2")
+
+curvas.umap.res %>% 
+  ggplot(aes(x = V2, y = V3, color = anno)) +
+  geom_point()+
+  scale_color_brewer(palette = "Dark2")
+
+```
+
