@@ -39,7 +39,7 @@ head(datos)
 
 # Exploracion de datos
 
-##Exploración de las curvas
+## Exploración de las curvas
 
 ## Exploracion por plazo
 
@@ -70,6 +70,7 @@ datos %>%
 
 
 ```
+
 Claramente, a mayor plazo mayor es el promedio y mediana de los rendimientos.
 
 
@@ -112,7 +113,7 @@ datos %>%
   ylim(0,15)+
   ylab("Tasas") +
   xlab("Trimestre") +
-  ggtitle("Tasas por plazo y año")+
+  ggtitle("Tasas por plazo, Trimestre y año")+
   facet_grid(plazo~anno)
    
 
@@ -133,7 +134,7 @@ datos %>%
   ylim(0,15)+
   ylab("Tasas") +
   xlab("Mes") +
-  ggtitle("Tasas por plazo y año")+
+  ggtitle("Tasas por plazo, Mes y año")+
   facet_grid(plazo~anno)
    
 
@@ -145,7 +146,7 @@ datos %>%
 
 # Exploración por curvas
 
-##Curvas por año
+## Curvas por año
 
 ```{r}
 
@@ -199,7 +200,7 @@ datos %>%
 Para el corto y mediano plazo, al ver las curvas por año se aprecia que de los años 2017 al 2019 se tienen las tasas mas altas. Las tasas del 2020 son más bajas.
 
 
-##Curvas por mes
+## Curvas por mes
 
 ```{r}
 
@@ -251,7 +252,7 @@ datos %>%
 ```
 
 
-##Curvas por trimestre
+## Curvas por trimestre
 
 ```{r}
 
@@ -305,10 +306,10 @@ datos %>%
 
 
 ## Curvas por semana
+
 ```{r}
 
 datos %>%
-  filter(plazo=="Corto") %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
   geom_line() +
   scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
@@ -318,36 +319,8 @@ datos %>%
   ylim(0,15)+
   ylab("Tasas") +
   xlab("Plazo") +
-  ggtitle("Curvas de tasas por semana - Corto Plazo")
-
-
-datos %>%
-  filter(plazo=="Mediano") %>% 
-  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
-  geom_line() +
-  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
-  ylim(0,15)+
-  ylab("Tasas") +
-  xlab("Plazo") +
-  ggtitle("Curvas de tasas por semana - Mediano Plazo")
-  
-
-
-datos %>%
-  filter(plazo=="Largo") %>% 
-  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
-  geom_line() +
-  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
-  ylim(0,15)+
-  ylab("Tasas") +
-  xlab("Plazo") +
-  ggtitle("Curvas de tasas por semana - Largo plazo")
+  ggtitle("Curvas de tasas por semana")+
+  facet_grid(~plazo)
 
 ```
 
@@ -571,6 +544,7 @@ datos2 %>%
 
 ```
 
+
 **Volatilidad**
 
 
@@ -585,7 +559,7 @@ datos3<-datos2 %>%
   mutate(obs=row_number())
 
 #para agrupar y calcular la desviacion de la variabilidad cada 10 observaciones
-datos3$GRP<-rep(c(1:360),each=10,256)
+datos3$GRP<-rep(c(1:360),each=10,257)
 
 #volatilidad por semana
 datos4<-datos3 %>% 

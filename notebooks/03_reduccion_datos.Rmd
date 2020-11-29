@@ -40,6 +40,7 @@ head(datos)
 ## PCA
 
 ### Calculo del modelo
+
 ```{r}
 
 datos_pca <- datos %>% 
@@ -72,7 +73,8 @@ plot(pr_var[1:10],
      xlab = "Componentes")
 grid()
 ```
-Según el gráfico de sedimentación se podrían sugerir 2 o 3 componentes.
+
+Según el gráfico de sedimentación se podrían sugerir 1 COMPONENTE.
 
 ### Variabilidad explicada
 
@@ -104,6 +106,7 @@ plot(cumsum(prop_varex[1:10]), xlab = "Componentes",
               col = "red")
 grid()
 ```
+
 
 Se puede apreciar que el primer componente explica el 92.7%, el segundo el 5.6% y el tercero el 1.1%, en conjunto los tres primeros componentes principales explican el 99.4% de la variancia total. El nivel y la pendiente tienen la mayor participación en la explicación de la variabilidad. El 98.3% de la variancia total de los datos se explica a partir de los desplazamientos paralelos y de la pendiente de la curva, mientras que la curvatura explica sólo el 1.1% de los movimientos.
 
@@ -164,10 +167,9 @@ tibble(dias = 1:3600,
 
 ```
 
-El primer componente tiene una correlacion promedio de 0.96 con respecto a las
-3600 variables.
-Al graficar las correlaciones del componenete para cada variable se observa que
-varia entre .88 y .99 y que las correlaciones mas altas se ubican en el mediano plazo. Es decir, el componente captura mejor la variabilidad de las tasas a mediano y largo plazo.
+
+
+El primer componente tiene una correlación promedio de 0.96 con respecto a las 3600 variables. Al graficar las correlaciones del componente para cada variable se observa que varia entre .88 y .99 y que las correlaciones mas altas se ubican en el mediano plazo. Es decir, el componente captura mejor la variabilidad de las tasas a mediano y largo plazo.
 
 
 
@@ -179,10 +181,12 @@ varia entre .88 y .99 y que las correlaciones mas altas se ubican en el mediano 
 vectores_prop<-prin_comp$rotation
 head(vectores_prop[,1:10])
 ```
-- Primer Componente (Nivel)
 
-las cargas del primer componente principal son todas positivas y similares entre sí. En
-nuestro caso este factor explica un 92.7%, de la variabilidad total, siendo claramente el más importante. El primer factor es casi plano.
+
+-  Primer Componente (Nivel)
+
+
+las cargas del primer componente principal son todas positivas y similares entre sí. En nuestro caso este factor explica un 92.7%, de la variabilidad total, siendo claramente el más importante. El primer factor es casi plano.
 
 ```{r}
 pl<-c(rep("seagreen",360),rep("darkorange3",720),rep("mediumpurple3",2520))
@@ -197,7 +201,12 @@ legend("bottomright",legend = c("corto","mediano","largo"), col = c("seagreen","
 grid()
 
 ```
+
+
+
+
 - Segundo Componente (pendiente)
+
 
 Para los vencimientos a corto plazo prevalecen los valores negativos y para los vencimientos a largo plazo las cargas son positivas, signos opuestos en ambos extremos. Este factor contribuye a explicar la variabilidad de las tasas en un 5.6% 
 
@@ -212,6 +221,8 @@ legend("bottomright",legend = c("corto","mediano","largo"), col = c("seagreen","
 grid()
 
 ```
+
+
 - Tercer Componente (curvatura)
 
 El tercer componente, contribuye a la variabilidad total en un 1.1% y se le asocia a cambios en la concavidad de la curva. Signo contrario en el centro que el de los extremos.
