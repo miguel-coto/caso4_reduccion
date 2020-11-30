@@ -99,17 +99,20 @@ El indicador comenzó a mostrar un nivel mayor al promedio histórico a finales 
 A inicios del 2020 a partir de la semana del 18-03-20 al 24-03-20 se observa una marcada tendencia positiva a pesar de presentar niveles por debajo de la media.
 
 
+**Validación de curvas en tendencias positivas**
 
+- Pendiente positiva en 2017 
+
+En el año del 2017 se tienen 2 casos, el primero donde la tendencia es marcada a finales del mes de mayo e inicios de junio, aquí se observa que en 2017-06-06 los rendimientos de mediano y largo plazo tienen tasas mayores y hay una pendiente más pronunciada. 
+En el segundo caso de la semana del 2017-09-19 a la del 2017-10-31, las pendientes se vuelven más pronunciadas y las tasas aumentan conforme el indicador aumenta.
 
 ```{r}
-
-#pendiente positiva en 2017 
 
 datos %>%
   filter(fecha=="2017-06-06" | fecha=="2017-05-30"| fecha== "2017-09-19"| fecha=="2017-09-26"
          | fecha=="2017-10-03"| fecha=="2017-10-10"| fecha==  "2017-10-17" | fecha=="2017-10-24"| fecha=="2017-10-31" ) %>% 
   arrange(fecha) %>% 
-  mutate(fecha=as.factor(fecha)) %>% 
+  mutate(fecha=as.factor(as.character(fecha))) %>% 
   mutate(Caso=c(rep(1,3600*2),rep(2,3600*7))) %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = fecha)) +
   geom_line() +
@@ -123,11 +126,11 @@ datos %>%
 
 ```
 
+- Pendiente positiva en 2018
 
+En este caso en el corto y en el largo plazo las tasas aumentan al aumentar el indicador
 
 ```{r}
-
-#pendiente positiva en 2018
 
 datos %>%
   filter(fecha=="2018-12-25" | fecha=="2018-12-18" ) %>% 
@@ -144,8 +147,11 @@ datos %>%
 
 ```
 
+- Pendiente positiva en 2019
+
+En este caso en el mediano y en el largo plazo las tasas aumentan al aumentar el indicador
+
 ```{r}
-#pendiente positiva en 2019
 
 datos %>%
   filter(fecha=="2019-03-12" | fecha=="2019-03-19" ) %>% 
@@ -162,10 +168,12 @@ datos %>%
 
 ```
 
+- Pendiente positiva en 2020
+
+
+Curvas con pendientes más pronunciadas y mayores tasas al aumentar el indicador
 
 ```{r}
-#pendiente positiva en 2020
-
 
 datos %>%
   filter(fecha=="2020-03-24" | fecha=="2020-03-31"|fecha=="2020-04-07" | fecha=="2020-04-21"  ) %>% 
