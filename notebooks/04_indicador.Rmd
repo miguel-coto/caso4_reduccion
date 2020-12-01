@@ -59,6 +59,7 @@ componentes %>%
   ggplot(aes(x = fecha, y = IR_S)) +
   geom_line() +
   geom_line(y=0,col="red",linetype = "dashed") +
+  geom_line(y=median(componentes$IR_S),col="blue",linetype = "dashed") +
   theme(legend.position = "none",
         plot.title = element_text(hjust = 0.5)) +
   ylab("ICR") +
