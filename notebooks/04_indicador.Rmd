@@ -168,7 +168,7 @@ Caso 1: aumento en el indicador
 
 A inicios del 2020 a finales de marzo y en abril es donde se muestra un aumento pronunciado en el indicador.
 En cuanto al nivel se observa un desplazamiento hacia arriba de las curvas a mayor fecha y mayor indicador, sin embargo en el largo plazo a partir de 9 años aproximadamente se invierte.
-La tendencia es positiva, las curvas a corto plazo tienen menores rendimientos que los de las curvas a largo plazo que son mayores. En cuanto a la curvatura vemos que a finales del corto plazo se empieza a formar.
+La tendencia se observan curvas ascendentes, las curvas a corto plazo tienen menores rendimientos que los de las curvas a largo plazo que son mayores. En cuanto a la curvatura vemos que a finales del corto plazo se empieza a formar.
 
 
 ```{r}
@@ -196,7 +196,7 @@ datos %>%
 caso 2: disminución en el indicador pero con cierta variabilidad
 
 
-Se observa un desplazamiento de la curva hacia abajo en el corto, mediano y a inicios del largo plazo. Se observa una mayor curvatura a inicios del largo plazo entre la última semana de abril y finales de junio aproximadamente. La tendencia es positiva.
+Se observa un desplazamiento de la curva hacia abajo en el corto, mediano y a inicios del largo plazo. Se observa una mayor curvatura a inicios del largo plazo entre la última semana de abril y finales de junio aproximadamente. La tendencia se observan curvas ascendentes.
 
 
 ```{r}
@@ -227,7 +227,7 @@ datos %>%
 Caso 1: disminución en el indicador
 
 
-Se observa un desplazamiento de la curva hacia abajo en corto, mediano y largo plazo. La curvatura se observa principalmente en el mediano plazo y  conforme el indicador es mayor, por ejemplo a inicios del periodo tomado, la pendiente de la curva se vuelve más pronunciada en el corto plazo. La tendencia es positiva.
+Se observa un desplazamiento de la curva hacia abajo en corto, mediano y largo plazo. La curvatura se observa principalmente en el mediano plazo y  conforme el indicador es mayor, por ejemplo a inicios del periodo tomado, la pendiente de la curva se vuelve más pronunciada en el corto plazo. La tendencia es se observan curvas ascendentes.
 
 
 ```{r}
@@ -254,7 +254,8 @@ datos %>%
 
 - 2017 : aumento en el indicador
 
-En este caso en el corto y en el largo plazo las tasas aumentan al aumentar el indicador
+En cuanto al nivel se observa un desplazamiento hacia arriba de las curvas a mayor fecha y mayor indicador.
+La tendencia se observan curvas ascendentes, las curvas a corto plazo tienen menores rendimientos que los de las curvas a largo plazo que son mayores. La curvatura se observa principalmente en el mediano plazo.
 
 ```{r}
 
@@ -276,9 +277,6 @@ datos %>%
 
 ```
 
-
-En cuanto al nivel se observa un desplazamiento hacia arriba de las curvas a mayor fecha y mayor indicador.
-La tendencia es positiva, las curvas a corto plazo tienen menores rendimientos que los de las curvas a largo plazo que son mayores. La curvatura se observa principalmente en el mediano plazo.
 
 
 
