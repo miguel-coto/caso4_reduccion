@@ -312,6 +312,21 @@ datos %>%
 datos %>%
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
   geom_line() +
+  geom_vline(xintercept=1,col="blue",linetype = "dashed")+
+  geom_vline(xintercept=3,col="blue",linetype = "dashed")+
+  scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de tasas por semana")
+
+
+datos %>%
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = as.factor(fecha))) +
+  geom_line() +
   scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
   theme(legend.position = "none",
         plot.title = element_text(hjust = 0.5)) +
@@ -455,6 +470,8 @@ datos2<-datos %>%
 datos2 %>%
   ggplot(aes(x = plazo_en_anos, y = variab, color = as.factor(fecha))) +
   geom_line() +
+  geom_vline(xintercept=1,col="blue",linetype = "dashed")+
+  geom_vline(xintercept=3,col="blue",linetype = "dashed")+
   scale_color_manual(values = grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, "Dark2"))(257)) +
   theme(legend.position = "none",
         plot.title = element_text(hjust = 0.5)) +

@@ -7,6 +7,9 @@ output: html_notebook
 library(here)
 library(tidyverse)
 library(lubridate)
+library(outliers)
+library(forecast)
+
 ```
 
 Rutas
@@ -53,7 +56,6 @@ summary(componentes)
 
 
 ```{r}
-par(mfrow=c(1,2))
 
 componentes %>%
   ggplot(aes(x = fecha, y = IR_S)) +
@@ -65,6 +67,11 @@ componentes %>%
   ylab("ICR") +
   xlab("Fecha") +
   ggtitle("Indicador")
+
+
+```
+
+```{r}
 
 #promedio y mediana de cada semana para compararlo
 
@@ -90,6 +97,8 @@ base_temp %>%
 
 ```
 
+
+
 La forma del indicador tiende a ser similar a la del promedio de los rendimientos en cada semana.
 
 Niveles del ICR superiores a cero señalan aumentos en los rendimientos mayores al promedio histórico,
@@ -100,79 +109,67 @@ El indicador comenzó a mostrar un nivel mayor al promedio histórico a finales 
 A inicios del 2020 a partir de la semana del 18-03-20 al 24-03-20 se observa una marcada tendencia positiva a pesar de presentar niveles por debajo de la media.
 
 
-**Validación de curvas en tendencias positivas**
 
-- Pendiente positiva en 2017 
-
-En el año del 2017 se tienen 2 casos, el primero donde la tendencia es marcada a finales del mes de mayo e inicios de junio, aquí se observa que en 2017-06-06 los rendimientos de mediano y largo plazo tienen tasas mayores y hay una pendiente más pronunciada. 
-En el segundo caso de la semana del 2017-09-19 a la del 2017-10-31, las pendientes se vuelven más pronunciadas y las tasas aumentan conforme el indicador aumenta.
+**Descriptivo del indicador con series**
 
 ```{r}
-
-datos %>%
-  filter(fecha=="2017-06-06" | fecha=="2017-05-30"| fecha== "2017-09-19"| fecha=="2017-09-26"
-         | fecha=="2017-10-03"| fecha=="2017-10-10"| fecha==  "2017-10-17" | fecha=="2017-10-24"| fecha=="2017-10-31" ) %>% 
-  arrange(fecha) %>% 
-  mutate(fecha=as.factor(as.character(fecha))) %>% 
-  mutate(Caso=c(rep(1,3600*2),rep(2,3600*7))) %>% 
-  ggplot(aes(x = plazo_en_anos, y = tasa_percent, color = fecha)) +
-  geom_line() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
-  ylim(0,15)+
-  ylab("Tasas") +
-  xlab("Plazo") +
-  ggtitle("Curvas de rendimientos ")+
-  facet_grid(~Caso)
+componentes<-componentes %>% arrange(fecha)
+serie<-ts(componentes$IR_S, start = 1)
 
 ```
 
-- Pendiente positiva en 2018
 
-En este caso en el corto y en el largo plazo las tasas aumentan al aumentar el indicador
+
+
+- Valores Extremos
+
+Se detecta un posible valor extremo obtenido en la semana del 13-03-19 al 19-03-19. Según la prueba de Grubbs se rechaza la hipótesis nula de que 2.34 no es un outlier, mientras que en la prueba de Ji-cuadrado también se rechaza la hipótesis nula. 
+
 
 ```{r}
-
-datos %>%
-  filter(fecha=="2018-12-25" | fecha=="2018-12-18" ) %>% 
-  arrange(fecha) %>% 
-  mutate(fecha=as.factor(fecha)) %>% 
-  ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
-  geom_line() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
-  ylim(0,15)+
-  ylab("Tasas") +
-  xlab("Plazo") +
-  ggtitle("Curvas de rendimientos ")
+outlier(serie, opposite = FALSE, logical = FALSE)
+#se rechaza
+grubbs.test(serie, type = 10, opposite = FALSE, two.sided = TRUE) # one outlier
+#se rechaza
+chisq.out.test(serie, opposite = FALSE)
 
 ```
 
-- Pendiente positiva en 2019
 
-En este caso en el mediano y en el largo plazo las tasas aumentan al aumentar el indicador
 
+- Descomposición de la serie
+`
 ```{r}
-
-datos %>%
-  filter(fecha=="2019-03-12" | fecha=="2019-03-19" ) %>% 
-  arrange(fecha) %>% 
-  mutate(fecha=as.factor(fecha)) %>% 
-  ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
-  geom_line() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks=seq(0, 10, 1))+
-  ylim(0,15)+
-  ylab("Tasas") +
-  xlab("Plazo") +
-  ggtitle("Curvas de rendimientos ")
-
+decomp = decompose(serie, "multiplicative")
 ```
 
-- Pendiente positiva en 2020
 
 
-Curvas con pendientes más pronunciadas y mayores tasas al aumentar el indicador
+
+
+
+
+
+
+
+
+
+
+
+**Validación de curvas**
+
+
+Análisis del comportamiento del indicador y de los factores no observables 
+
+
+- 2020
+
+Caso 1: aumento en el indicador
+
+A inicios del 2020 a finales de marzo y en abril es donde se muestra un aumento pronunciado en el indicador.
+En cuanto al nivel se observa un desplazamiento hacia arriba de las curvas a mayor fecha y mayor indicador, sin embargo en el largo plazo a partir de 9 años aproximadamente se invierte.
+La tendencia es positiva, las curvas a corto plazo tienen menores rendimientos que los de las curvas a largo plazo que son mayores. En cuanto a la curvatura vemos que a finales del corto plazo se empieza a formar.
+
 
 ```{r}
 
@@ -182,14 +179,107 @@ datos %>%
   mutate(fecha=as.factor(fecha)) %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
   geom_line() +
+  geom_vline(xintercept=1,col="darkgray",linetype = "dashed")+
+  geom_vline(xintercept=3,col="darkgray",linetype = "dashed")+
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_x_continuous(breaks=seq(0, 10, 1))+
   ylim(0,15)+
   ylab("Tasas") +
   xlab("Plazo") +
-  ggtitle("Curvas de rendimientos ")
+  ggtitle("Curvas de rendimientos 2020")
+
+
 
 ```
+
+
+caso 2: disminución en el indicador pero con cierta variabilidad
+
+
+Se observa un desplazamiento de la curva hacia abajo en el corto, mediano y a inicios del largo plazo. Se observa una mayor curvatura a inicios del largo plazo entre la última semana de abril y finales de junio aproximadamente. La tendencia es positiva.
+
+
+```{r}
+
+datos %>%
+  filter(fecha>="2020-04-28" ) %>% 
+  arrange(fecha) %>% 
+  mutate(fecha=as.factor(fecha)) %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
+  geom_line() +
+  geom_vline(xintercept=1,col="darkgray",linetype = "dashed")+
+  geom_vline(xintercept=3,col="darkgray",linetype = "dashed")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos 2020")
+
+
+```
+
+
+
+
+- 2019
+
+Caso 1: disminución en el indicador
+
+
+Se observa un desplazamiento de la curva hacia abajo en corto, mediano y largo plazo. La curvatura se observa principalmente en el mediano plazo y  conforme el indicador es mayor, por ejemplo a inicios del periodo tomado, la pendiente de la curva se vuelve más pronunciada en el corto plazo. La tendencia es positiva.
+
+
+```{r}
+
+datos %>%
+  filter(year(fecha)==2019 & (quarter(fecha)==2|quarter(fecha)==3|quarter(fecha)==4 ) ) %>% 
+  arrange(fecha) %>% 
+  mutate(fecha=as.factor(fecha)) %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
+  geom_line() +
+  geom_vline(xintercept=1,col="darkgray",linetype = "dashed")+
+  geom_vline(xintercept=3,col="darkgray",linetype = "dashed")+
+  theme(
+    plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos 2019")
+
+```
+
+
+
+- 2017 : aumento en el indicador
+
+En este caso en el corto y en el largo plazo las tasas aumentan al aumentar el indicador
+
+```{r}
+
+datos %>%
+  filter(year(fecha)==2017 ) %>% 
+  arrange(fecha) %>% 
+  mutate(fecha=as.factor(fecha)) %>% 
+  ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
+  geom_line() +
+  geom_vline(xintercept=1,col="darkgray",linetype = "dashed")+
+  geom_vline(xintercept=3,col="darkgray",linetype = "dashed")+
+  theme(
+    plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks=seq(0, 10, 1))+
+  ylim(0,15)+
+  ylab("Tasas") +
+  xlab("Plazo") +
+  ggtitle("Curvas de rendimientos 2017")
+
+```
+
+
+En cuanto al nivel se observa un desplazamiento hacia arriba de las curvas a mayor fecha y mayor indicador.
+La tendencia es positiva, las curvas a corto plazo tienen menores rendimientos que los de las curvas a largo plazo que son mayores. La curvatura se observa principalmente en el mediano plazo.
+
 
 
 
