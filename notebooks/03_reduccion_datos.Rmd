@@ -12,6 +12,7 @@ library(stringr)
 library(readxl)
 library(fastICA)
 library(tidyverse)
+library(psych)
 ```
 
 Rutas
@@ -37,15 +38,14 @@ head(datos)
 
 # Reduccion
 
+
 ## PCA
 
 ### Calculo del modelo
 
 ```{r}
-
 datos_pca <- datos %>% 
   select("1":"3600")
-
 prin_comp <- prcomp(datos_pca, scale. = T)
 
 ```
