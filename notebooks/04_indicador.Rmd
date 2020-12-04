@@ -62,8 +62,7 @@ componentes %>%
   geom_line() +
   geom_line(y=0,col="red",linetype = "dashed") +
   geom_line(y=median(componentes$IR_S),col="blue",linetype = "dashed") +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
   ylab("ICR") +
   xlab("Fecha") +
   ggtitle("Indicador")
@@ -116,13 +115,17 @@ A inicios del 2020 a partir de la semana del 18-03-20 al 24-03-20 se observa una
 componentes<-componentes %>% arrange(fecha)
 serie<-ts(componentes$IR_S, start = 1)
 
-par(mfrow=c(2,1))
+par(mfrow=c(3,1))
 
 plot(serie)
 abline(h=0,col="red")
 grid()
 
 plot(diff(serie))
+abline(h=0,col="red")
+grid()
+
+plot(diff(log(serie)))
 abline(h=0,col="red")
 grid()
 ```
