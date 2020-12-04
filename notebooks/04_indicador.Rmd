@@ -209,16 +209,14 @@ datos %>%
 ```
 
 
-caso 2: disminución en el indicador pero con cierta variabilidad
 
 
-Se observa un desplazamiento de la curva hacia abajo en el corto, mediano y a inicios del largo plazo. Se observa una mayor curvatura a inicios del largo plazo entre la última semana de abril y finales de junio aproximadamente. La tendencia se observan curvas ascendentes.
-
+Curvas en mayo y juni0 2020
 
 ```{r}
 
 datos %>%
-  filter(fecha>="2020-04-28" ) %>% 
+  filter((month(fecha)==5 | month(fecha)==6) & year(fecha)==2020) %>% 
   arrange(fecha) %>% 
   mutate(fecha=as.factor(fecha)) %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
