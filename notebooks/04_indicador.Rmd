@@ -9,7 +9,7 @@ library(tidyverse)
 library(lubridate)
 library(outliers)
 library(forecast)
-
+library(Metrics)
 ```
 
 Rutas
@@ -98,6 +98,41 @@ base_temp %>%
 ```
 
 
+```{r}
+base_temp %>%
+  inner_join(componentes %>% 
+               select(fecha, IR_S), by = 'fecha') %>% 
+  mutate(mediana = (mediana-mean(mediana))/sd(mediana)) %>% 
+  pivot_longer( 
+    cols = -c(semana_rango,fecha, promedio), # Toma todas menos id
+    names_to = "Medida",
+    values_to = "Valor"
+  ) %>%
+  ggplot(aes(x = fecha, y = Valor,group=Medida,colour=Medida)) +
+  geom_line() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("") +
+  xlab("Fecha") +
+  ggtitle("Indicador y mediana estandarizada por semana")
+
+```
+
+
+```{r}
+base_temp2 <- base_temp %>%
+  inner_join(componentes %>% 
+               select(fecha, IR_S), by = 'fecha') %>% 
+  mutate(mediana = (mediana-mean(mediana))/sd(mediana)) 
+
+tibble(Medida = c("MAPE", "MedAPE", "Sesgo %"),
+       `Valor (%)` = c(
+         mape(base_temp2$mediana, base_temp2$IR_S)*100,
+         median(ape(base_temp2$mediana, base_temp2$IR_S))*100,
+         percent_bias(base_temp2$mediana, base_temp2$IR_S)*100
+       ))
+
+```
+
 
 La forma del indicador tiende a ser similar a la del promedio de los rendimientos en cada semana.
 
@@ -148,7 +183,7 @@ chisq.out.test(serie, opposite = FALSE)
 - Descomposición de la serie
 `
 ```{r}
-decomp = decompose(serie, "multiplicative")
+#decomp = decompose(serie, "multiplicative")
 ```
 
 
@@ -290,6 +325,91 @@ datos %>%
 
 
 ### Calibración
+
+
+```{r}
+componentes %>%
+  ggplot(aes(x = fecha, y = IR_S)) +
+  geom_line() +
+  geom_line(y=median(componentes$IR_S)-1,col="red",linetype = "dashed") +
+  geom_line(y=median(componentes$IR_S)+1,col="red",linetype = "dashed") +
+  geom_line(y=median(componentes$IR_S)-.5,col="orange",linetype = "dashed") +
+  geom_line(y=median(componentes$IR_S)+.5,col="orange",linetype = "dashed") +
+  geom_line(y=median(componentes$IR_S),col="blue",linetype = "dashed") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("ICR") +
+  xlab("Fecha") +
+  ggtitle("Indicador")
+
+```
+
+
+```{r}
+
+library("fitdistrplus")
+
+plotdist(base_temp2$IR_S, histo = TRUE, demp = TRUE)
+
+descdist(base_temp2$IR_S, boot = 1000)
+
+```
+
+```{r}
+
+plotdist(base_temp$mediana, histo = TRUE, demp = TRUE)
+
+descdist(base_temp$mediana, boot = 1000)
+
+```
+```{r}
+fb <- fitdist(base_temp$mediana, "weibull")
+fg <- fitdist(base_temp$mediana, "gamma")
+fln <- fitdist(base_temp$mediana, "lnorm")
+par(mfrow = c(2, 2))
+plot.legend <- c("Beta", "lognormal", "gamma")
+denscomp(list(fb, fln, fg), legendtext = plot.legend)
+qqcomp(list(fb, fln, fg), legendtext = plot.legend)
+cdfcomp(list(fb, fln, fg), legendtext = plot.legend)
+ppcomp(list(fb, fln, fg), legendtext = plot.legend)
+```
+
+```{r}
+
+plotdist(as.numeric(datos_long[10,8:3608]), histo = TRUE, demp = TRUE)
+
+descdist(as.numeric(datos_long[10,8:3608]), boot = 1000)
+
+```
+`
+```{r}
+
+pre_gamma = fitdist(as.numeric(datos_long[10,8:3608]), "lnorm")
+denscomp(pre_gamma)
+qqcomp(pre_gamma)
+cdfcomp(pre_gamma)
+ppcomp(pre_gamma)
+
+```
+
+
+
+```{r}
+
+componentes2 <- componentes %>% 
+  dplyr::select(-c(semana_rango, PC1, PC2, PC3)) %>% 
+  mutate(IR_R = (IR-min(IR))/(max(IR)-min(IR)))
+
+fb <- fitdist(componentes2$IR_R, "weibull")
+fg <- fitdist(componentes2$IR_R, "gamma")
+fln <- fitdist(componentes2$IR_R, "lnorm")
+par(mfrow = c(2, 2))
+plot.legend <- c("Beta", "lognormal", "gamma")
+denscomp(list(fb, fln, fg), legendtext = plot.legend)
+qqcomp(list(fb, fln, fg), legendtext = plot.legend)
+cdfcomp(list(fb, fln, fg), legendtext = plot.legend)
+ppcomp(list(fb, fln, fg), legendtext = plot.legend)
+```
 
 
 ### Interpretación
