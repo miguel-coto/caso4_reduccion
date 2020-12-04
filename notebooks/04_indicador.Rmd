@@ -113,15 +113,16 @@ A inicios del 2020 a partir de la semana del 18-03-20 al 24-03-20 se observa una
 
 ```{r}
 componentes<-componentes %>% arrange(fecha)
-serie<-ts(componentes$IR_S, start = 1)
+
+serie<-ts(componentes$IR_S, frequency = 50,start = c(2015,40))
 
 par(mfrow=c(3,1))
 
-plot(serie)
+plot(serie,ylab="ICR",xlab="")
 abline(h=0,col="red")
 grid()
 
-plot(diff(serie))
+plot(diff(serie),ylab="diff(ICR)",xlab="")
 abline(h=0,col="red")
 grid()
 
@@ -152,13 +153,17 @@ chisq.out.test(serie, opposite = FALSE)
 `
 ```{r}
 decomp = decompose(serie, "multiplicative")
+plot(decomp)
 ```
 
 
-
-
-
-
+```{r}
+options(scipen = 999)
+seasonplot(serie,col=rainbow(12),year.labels=TRUE,main="")
+#factores estacionales
+plot(decomp$seasonal,main="",xlab="",ylab="Factores")
+monthplot(serie,col="blue",main="")
+```
 
 
 
