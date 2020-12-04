@@ -276,7 +276,7 @@ La tendencia se observan curvas ascendentes, las curvas a corto plazo tienen men
 ```{r}
 
 datos %>%
-  filter(year(fecha)==2017 ) %>% 
+  filter(fecha=="2017-07-18"|fecha=="2017-07-25" ) %>% 
   arrange(fecha) %>% 
   mutate(fecha=as.factor(fecha)) %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
