@@ -5,11 +5,12 @@ output: html_notebook
 
 ```{r,message=FALSE,warning=FALSE}
 library(here)
-library(tidyverse)
 library(lubridate)
 library(outliers)
 library(forecast)
 library(Metrics)
+library(tidyverse)
+
 ```
 
 Rutas
@@ -334,6 +335,43 @@ datos %>%
 ### Calibración
 
 
+
+
+
+
+```{r}
+
+library("fitdistrplus")
+
+plotdist(componentes$IR, histo = TRUE, demp = TRUE)
+
+descdist(componentes$IR, boot = 1000)
+
+```
+
+```{r}
+
+plotdist(base_temp$mediana, histo = TRUE, demp = TRUE)
+
+descdist(base_temp$mediana, boot = 1000)
+
+```
+
+
+```{r}
+fb <- fitdist(base_temp$mediana, "weibull")
+fg <- fitdist(base_temp$mediana, "gamma")
+fln <- fitdist(base_temp$mediana, "lnorm")
+par(mfrow = c(2, 2))
+plot.legend <- c("Beta", "lognormal", "gamma")
+denscomp(list(fb, fln, fg), legendtext = plot.legend)
+qqcomp(list(fb, fln, fg), legendtext = plot.legend)
+cdfcomp(list(fb, fln, fg), legendtext = plot.legend)
+ppcomp(list(fb, fln, fg), legendtext = plot.legend)
+```
+
+
+
 ```{r}
 componentes %>%
   ggplot(aes(x = fecha, y = IR_S)) +
@@ -352,77 +390,197 @@ componentes %>%
 ```
 
 
-```{r}
-
-library("fitdistrplus")
-
-plotdist(base_temp2$IR_S, histo = TRUE, demp = TRUE)
-
-descdist(base_temp2$IR_S, boot = 1000)
-
-```
 
 ```{r}
 
-plotdist(base_temp$mediana, histo = TRUE, demp = TRUE)
+refln = -0.0678186
+sdln = 1.147298
 
-descdist(base_temp$mediana, boot = 1000)
-
+#plotly::ggplotly(
+componentes %>%
+  ggplot(aes(x = fecha, y = IR_S)) +
+  geom_line() +
+  #geom_line(y=median(componentes$IR_S)-1,col="red",linetype = "dashed") +
+  geom_line(y=refln+sdln,col="red",linetype = "dashed") +
+  geom_line(y=refln-sdln,col="red",linetype = "dashed") +
+  geom_line(y=refln+sdln*.75,col="orange",linetype = "dashed") +
+  geom_line(y=refln-sdln*.75,col="orange",linetype = "dashed") +
+  geom_line(y=refln ,col="green",linetype = "dashed") +
+  #geom_line(y=median(componentes$IR_S),col="blue",linetype = "dashed") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5)) +
+  ylab("ICR") +
+  xlab("Fecha") +
+  ggtitle("")
+#)
 ```
-```{r}
-fb <- fitdist(base_temp$mediana, "weibull")
-fg <- fitdist(base_temp$mediana, "gamma")
-fln <- fitdist(base_temp$mediana, "lnorm")
-par(mfrow = c(2, 2))
-plot.legend <- c("Beta", "lognormal", "gamma")
-denscomp(list(fb, fln, fg), legendtext = plot.legend)
-qqcomp(list(fb, fln, fg), legendtext = plot.legend)
-cdfcomp(list(fb, fln, fg), legendtext = plot.legend)
-ppcomp(list(fb, fln, fg), legendtext = plot.legend)
-```
-
-```{r}
-
-plotdist(as.numeric(datos_long[10,8:3608]), histo = TRUE, demp = TRUE)
-
-descdist(as.numeric(datos_long[10,8:3608]), boot = 1000)
-
-```
-`
-```{r}
-
-pre_gamma = fitdist(as.numeric(datos_long[10,8:3608]), "lnorm")
-denscomp(pre_gamma)
-qqcomp(pre_gamma)
-cdfcomp(pre_gamma)
-ppcomp(pre_gamma)
-
-```
-
-
-
-```{r}
-
-componentes2 <- componentes %>% 
-  dplyr::select(-c(semana_rango, PC1, PC2, PC3)) %>% 
-  mutate(IR_R = (IR-min(IR))/(max(IR)-min(IR)))
-
-fb <- fitdist(componentes2$IR_R, "weibull")
-fg <- fitdist(componentes2$IR_R, "gamma")
-fln <- fitdist(componentes2$IR_R, "lnorm")
-par(mfrow = c(2, 2))
-plot.legend <- c("Beta", "lognormal", "gamma")
-denscomp(list(fb, fln, fg), legendtext = plot.legend)
-qqcomp(list(fb, fln, fg), legendtext = plot.legend)
-cdfcomp(list(fb, fln, fg), legendtext = plot.legend)
-ppcomp(list(fb, fln, fg), legendtext = plot.legend)
-```
-
 
 ### Interpretación
 
+Correlaciones por plazo
+```{r}
+
+curv_corto <- datos_long %>% 
+  inner_join(base_temp2 %>% dplyr::select(fecha, IR_S), by = "fecha") %>% 
+  dplyr::select(c(7:366, 3609)) 
+
+curv_mediano <- datos_long %>% 
+  inner_join(base_temp2 %>% dplyr::select(fecha, IR_S), by = "fecha") %>% 
+  dplyr::select(c(367:1086), 3609)
+
+curv_largo <- datos_long %>% 
+  inner_join(base_temp2 %>% dplyr::select(fecha, IR_S), by = "fecha") %>% 
+  dplyr::select(c(1087:3606), 3609)
+
+cor_corto = cor(curv_corto)
+
+ref_corto = which.max(cor_corto[1:360,361])
+
+cor_mediano = cor(curv_mediano)
+
+ref_mediano = which.max(cor_mediano[1:720,721])
+
+cor_largo = cor(curv_largo)
+
+ref_largo = which.max(cor_largo[1:2520,2521])
+
+```
+
+Medio año, 3 años y 5 años
 
 
+```{r}
+
+puntos_base = tibble(
+  fecha = datos_long %>%
+    inner_join(base_temp2 %>% dplyr::select(fecha, IR_S), by = "fecha") %>%
+    dplyr::select(fecha) %>% 
+    unlist() %>% 
+    as_date(),
+  indicador = datos_long %>%
+    inner_join(base_temp2 %>% dplyr::select(fecha, IR_S), by = "fecha") %>%
+    dplyr::select(IR_S) %>% 
+    unlist(),
+  curv_corto = unlist(curv_corto[ref_corto]),
+  curv_mediano = unlist(curv_mediano[ref_mediano]),
+  curv_largo = unlist(curv_largo[ref_largo])
+) %>% 
+  arrange(fecha)
+
+puntos_base <- puntos_base %>% 
+  mutate(corto_s = (curv_corto-mean(curv_corto))/sd(curv_corto),
+         mediano_s = (curv_mediano-mean(curv_mediano))/sd(curv_mediano),
+         largo_s = (curv_largo-mean(curv_largo))/sd(curv_largo)
+         )
+
+puntos_base <- puntos_base %>% 
+  mutate(dif_corto = c(0,diff(curv_corto))*100,
+         dif_mediano = c(0,diff(curv_mediano))*100,
+         dif_largo = c(0,diff(curv_largo))*100,
+         dif_corto_s = c(0,diff(corto_s)),
+         dif_mediano_s = c(0,diff(mediano_s)),
+         dif_largo_s = c(0,diff(largo_s)),
+         diff_ind = c(0,diff(indicador))
+         
+         )
+
+puntos_base <- puntos_base %>% 
+  mutate(ind_pb_corto = round((dif_corto*diff_ind)/dif_corto_s,3), 
+         ind_pb_mediano = round((dif_mediano*diff_ind)/dif_mediano_s,3),
+         ind_pb_largo = round((dif_largo*diff_ind)/dif_largo_s,3)
+         )
+
+
+```
+
+Pb corto plazo
+```{r}
+library(latticeExtra)
+
+ 
+# --> construct separate plots for each series
+obj1 <-
+  xyplot(
+    indicador ~ fecha,
+    puntos_base,
+    type = "l" ,
+    lwd = 2,
+    ylab = "",
+    par.settings = list(superpose.line = list(
+      col = c("black", "blue"),
+      lwd = 2
+    ))
+  ) + layer(panel.ablineq(refln + sdln * .75, label = "", col = "orange"),
+            panel.ablineq(refln + sdln, label = "", col = "red"),
+            panel.ablineq(refln - sdln * .75, label = "", col = "orange"),
+            panel.ablineq(refln - sdln, label = "", col = "red")
+            )
+
+obj2 <- xyplot(ind_pb_corto ~ fecha, puntos_base, type = "l", lwd=2, ylab = "")
+ 
+# --> Make the plot with second y axis AND legend:
+doubleYScale(obj1, obj2, text = c("Indicador", "Cambio en pb corto plazo") , add.ylab2 = TRUE )+
+  latticeExtra::layer(panel.abline(v = 1))
+
+```
+
+
+Pb mediano plazo
+```{r}
+ 
+# --> construct separate plots for each series
+obj1 <-
+  xyplot(
+    indicador ~ fecha,
+    puntos_base,
+    type = "l" ,
+    lwd = 2,
+    ylab = "",
+    par.settings = list(superpose.line = list(
+      col = c("black", "blue"),
+      lwd = 2
+    ))
+  ) + layer(panel.ablineq(refln + sdln * .75, label = "", col = "orange"),
+            panel.ablineq(refln + sdln, label = "", col = "red"),
+            panel.ablineq(refln - sdln * .75, label = "", col = "orange"),
+            panel.ablineq(refln - sdln, label = "", col = "red")
+            )
+
+obj2 <- xyplot(ind_pb_mediano ~ fecha, puntos_base, type = "l", lwd=2, ylab = "")
+ 
+# --> Make the plot with second y axis AND legend:
+doubleYScale(obj1, obj2, text = c("Indicador", "Cambio en pb mediano plazo") , add.ylab2 = TRUE )
+
+```
+
+Pb largo plazo
+```{r}
+ 
+# --> construct separate plots for each series
+
+obj1 <-
+  xyplot(
+    indicador ~ fecha,
+    puntos_base,
+    type = "l" ,
+    lwd = 2,
+    ylab = "",
+    par.settings = list(superpose.line = list(
+      col = c("black", "blue"),
+      lwd = 2
+    ))
+  ) + layer(panel.ablineq(refln + sdln * .75, label = "", col = "orange"),
+            panel.ablineq(refln + sdln, label = "", col = "red"),
+            panel.ablineq(refln - sdln * .75, label = "", col = "orange"),
+            panel.ablineq(refln - sdln, label = "", col = "red")
+            )
+
+obj2 <- xyplot(ind_pb_largo ~ fecha, puntos_base, type = "l", lwd=2, ylab = "")
+ 
+# --> Make the plot with second y axis AND legend:
+doubleYScale(obj1, obj2, text = c("Indicador", "Cambio en pb largo plazo") , add.ylab2 = TRUE )
+
+```
 
 
 
