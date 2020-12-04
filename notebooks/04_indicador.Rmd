@@ -62,8 +62,7 @@ componentes %>%
   geom_line() +
   geom_line(y=0,col="red",linetype = "dashed") +
   geom_line(y=median(componentes$IR_S),col="blue",linetype = "dashed") +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
   ylab("ICR") +
   xlab("Fecha") +
   ggtitle("Indicador")
@@ -149,15 +148,20 @@ A inicios del 2020 a partir de la semana del 18-03-20 al 24-03-20 se observa una
 
 ```{r}
 componentes<-componentes %>% arrange(fecha)
-serie<-ts(componentes$IR_S, start = 1)
 
-par(mfrow=c(2,1))
+serie<-ts(componentes$IR_S, frequency = 50,start = c(2015,40))
 
-plot(serie)
+par(mfrow=c(3,1))
+
+plot(serie,ylab="ICR",xlab="")
 abline(h=0,col="red")
 grid()
 
-plot(diff(serie))
+plot(diff(serie),ylab="diff(ICR)",xlab="")
+abline(h=0,col="red")
+grid()
+
+plot(diff(log(serie)))
 abline(h=0,col="red")
 grid()
 ```
@@ -183,14 +187,19 @@ chisq.out.test(serie, opposite = FALSE)
 - Descomposición de la serie
 `
 ```{r}
-#decomp = decompose(serie, "multiplicative")
+
+decomp = decompose(serie, "multiplicative")
+plot(decomp)
 ```
 
 
-
-
-
-
+```{r}
+options(scipen = 999)
+seasonplot(serie,col=rainbow(12),year.labels=TRUE,main="")
+#factores estacionales
+plot(decomp$seasonal,main="",xlab="",ylab="Factores")
+monthplot(serie,col="blue",main="")
+```
 
 
 
@@ -236,16 +245,14 @@ datos %>%
 ```
 
 
-caso 2: disminución en el indicador pero con cierta variabilidad
 
 
-Se observa un desplazamiento de la curva hacia abajo en el corto, mediano y a inicios del largo plazo. Se observa una mayor curvatura a inicios del largo plazo entre la última semana de abril y finales de junio aproximadamente. La tendencia se observan curvas ascendentes.
-
+Curvas en mayo y juni0 2020
 
 ```{r}
 
 datos %>%
-  filter(fecha>="2020-04-28" ) %>% 
+  filter((month(fecha)==5 | month(fecha)==6) & year(fecha)==2020) %>% 
   arrange(fecha) %>% 
   mutate(fecha=as.factor(fecha)) %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
@@ -303,7 +310,7 @@ La tendencia se observan curvas ascendentes, las curvas a corto plazo tienen men
 ```{r}
 
 datos %>%
-  filter(year(fecha)==2017 ) %>% 
+  filter(fecha=="2017-07-18"|fecha=="2017-07-25" ) %>% 
   arrange(fecha) %>% 
   mutate(fecha=as.factor(fecha)) %>% 
   ggplot(aes(x = plazo_en_anos, y = tasa_percent, colour = fecha)) +
